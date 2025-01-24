@@ -1,0 +1,86 @@
+collaborators:
+- permission: admin
+  username: tautologicc
+repository:
+  allow_auto_merge: true
+  allow_merge_commit: false
+  allow_rebase_merge: false
+  allow_squash_merge: true
+  allow_update_branch: true
+  default_branch: main
+  delete_branch_on_merge: true
+  description: '@tautologicc''s homelab'
+  enable_automated_security_fixes: false
+  enable_vulnerability_alerts: true
+  has_issues: true
+  has_projects: false
+  has_wiki: false
+  homepage: https://fabricte.st
+  is_template: false
+  merge_commit_message: PR_BODY
+  merge_commit_title: PR_TITLE
+  name: fabrictest
+  private: false
+  squash_merge_commit_message: PR_BODY
+  squash_merge_commit_title: PR_TITLE
+  topics: lix
+  use_squash_pr_title_as_default: true
+  visibility: public
+rulesets:
+- conditions:
+    ref_name:
+      exclude: []
+      include:
+      - ~DEFAULT_BRANCH
+  enforcement: active
+  name: Prevent tampering with default branch
+  rules:
+  - type: deletion
+  - type: non_fast_forward
+  - type: required_linear_history
+  - type: required_signatures
+  target: branch
+- bypass_actors:
+  - actor_id: 5
+    actor_type: RepositoryRole
+    bypass_mode: always
+  conditions:
+    ref_name:
+      exclude: []
+      include:
+      - ~DEFAULT_BRANCH
+  enforcement: active
+  name: Require PRs to the default branch to pass the quality bar
+  rules:
+  - parameters:
+      allowed_merge_methods:
+      - squash
+      automatic_copilot_code_review_enabled: true
+      dismiss_stale_reviews_on_push: true
+      require_code_owner_review: true
+      require_last_push_approval: true
+      required_approving_review_count: 1
+      required_review_thread_resolution: true
+    type: pull_request
+  target: branch
+- conditions:
+    ref_name:
+      exclude: []
+      include:
+      - refs/tags/v*
+  enforcement: active
+  name: Prevent deletion of release tags
+  rules:
+  - type: deletion
+  target: tag
+- conditions:
+    ref_name:
+      exclude: []
+      include:
+      - refs/tags/v*.*.*
+  enforcement: active
+  name: Prevent tampering with release tags
+  rules:
+  - type: non_fast_forward
+  - type: update
+  target: tag
