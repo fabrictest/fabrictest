@@ -1,0 +1,9 @@
+.DS_Store
+TODO
+/.run
+/result
+/result-man
+
+# nixago: ignore-linked-files
+/treefmt.toml
+/.editorconfig
