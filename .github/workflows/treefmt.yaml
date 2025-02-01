@@ -14,7 +14,6 @@ concurrency:
 jobs:
   format:
     name: Format changes
-    if: ${{ github.event.pull_request.head.user.login != 'the-accuser[bot]' }}
     runs-on: ubuntu-latest
     steps:
       - name: Install Lix
@@ -33,6 +32,7 @@ jobs:
       - name: Format files
         id: format
         run: |
+          jq . "$GITHUB_EVENT_PATH"
           nix develop --command treefmt
           {
             echo files'<<'FILES
