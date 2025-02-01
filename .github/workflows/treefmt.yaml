@@ -46,6 +46,7 @@ jobs:
         if: ${{ steps.format.outputs.files }}
         uses: IAreKyleW00t/verified-bot-commit@1c7707882a8619579f3e109ba20917e1a0fae2ea # v1.0.10
         with:
+          ref: ${{ github.event.pull_request.head.ref }}
           message: |
             style: format changes
           files: ${{ steps.format.outputs.files }}
