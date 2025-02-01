@@ -11,12 +11,13 @@ on:
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
-permissions:
-  contents: write # zizmor: ignore[excessive-permissions]
 jobs:
   format:
     name: Format changes
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # zizmor: ignore[excessive-permissions]
+      workflows: write
     steps:
       - name: Install Lix
         uses: fabrictest/action-setup-lix@v0.13.0
