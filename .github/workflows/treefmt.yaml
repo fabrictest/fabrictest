@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Install Lix
-        uses: fabrictest/action-setup-lix@8b1862b6aea281b1baa0e36c081edc2f01278d3d # v0.12.1
+        uses: fabrictest/action-setup-lix@59430524679456a016b42045e0cd348c1cd77cc6 # v0.12.2
         with:
           lix-on-tmpfs: true
       - name: Set up Cachix
