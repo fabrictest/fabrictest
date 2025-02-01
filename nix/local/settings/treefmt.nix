@@ -21,31 +21,6 @@ std.lib.dev.mkNixago {
     # *
     formatter = {
 
-      # https://waterlan.home.xs4all.nl/dos2unix.html
-      dos2unix =
-        let
-          command = l.getExe' pkgs.dos2unix "dos2unix";
-          options = l.cli.toGNUCommandLine { } {
-            add-eol = true;
-            keepdate = true;
-          };
-
-          # NOTE(ttlgcc): By default, `dos2unix` formats files in-place.
-          #  However, running it this way gives a lot of file permission
-          #  errors.  Allow `dos2unix` to store partially formatted text
-          #  in temporary files.
-          dos2unix' = pkgs.writeShellScriptBin "dos2unix-newfile" ''
-            printf %s\\n "''$@" |
-              xargs -I{} -L1 -- printf ' --newfile "%s" "%s"' {} {} |
-              xargs -- ${command} ${l.toString options}
-          '';
-        in
-        {
-          command = l.getExe dos2unix';
-          includes = [ "*" ];
-          priority = -10;
-        };
-
       # https://github.com/google/keep-sorted
       keep-sorted = {
         command = l.getExe pkgs.keep-sorted;
