@@ -34,7 +34,7 @@ jobs:
       - name: Format files
         id: format
         run: |
-          nix develop --command treefmt --ci
+          nix develop --command treefmt
           {
             echo files'<<'FILES
             git diff --name-only
