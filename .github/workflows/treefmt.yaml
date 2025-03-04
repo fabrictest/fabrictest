@@ -51,7 +51,7 @@ jobs:
           private-key: ${{ secrets.THE_ACCUSER_PRIVATE_KEY }}
       - name: Commit changes
         if: ${{ steps.format.outputs.files }}
-        uses: IAreKyleW00t/verified-bot-commit@1c7707882a8619579f3e109ba20917e1a0fae2ea # v1.0.10
+        uses: IAreKyleW00t/verified-bot-commit@7d9f3c171717d50d8adac21bdd0e28c1e13b4ace # v1.0.13
         with:
           files: ${{ steps.format.outputs.files }}
           message: |
