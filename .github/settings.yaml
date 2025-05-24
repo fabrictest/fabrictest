@@ -1,0 +1,88 @@
+---
+repository:
+  name: fabrictest
+  description: WIP
+  homepage: https://fabricte.st
+  topics: nix, wip
+  private: false
+  visibility: public
+  has_issues: true
+  has_projects: false
+  has_wiki: false
+  is_template: false
+  default_branch: main
+  allow_squash_merge: true
+  allow_merge_commit: false
+  allow_rebase_merge: false
+  allow_auto_merge: true
+  delete_branch_on_merge: true
+  allow_update_branch: true
+  use_squash_pr_title_as_default: true
+  squash_merge_commit_title: PR_TITLE
+  squash_merge_commit_message: PR_BODY
+  merge_commit_title: PR_TITLE
+  merge_commit_message: PR_BODY
+  enable_automated_security_fixes: false
+  enable_vulnerability_alerts: true
+collaborators:
+  - username: tautologicc
+    permission: admin
+rulesets:
+  - name: Prevent tampering with default branch
+    target: branch
+    enforcement: active
+    conditions:
+      ref_name:
+        include:
+          - "~DEFAULT_BRANCH"
+        exclude: []
+    rules:
+      - type: deletion
+      - type: non_fast_forward
+      - type: required_linear_history
+      - type: required_signatures
+  - name: Require PRs to the default branch to pass the quality bar
+    target: branch
+    enforcement: active
+    conditions:
+      ref_name:
+        include:
+          - "~DEFAULT_BRANCH"
+        exclude: []
+    rules:
+      - type: pull_request
+        parameters:
+          required_approving_review_count: 1
+          dismiss_stale_reviews_on_push: true
+          require_code_owner_review: true
+          require_last_push_approval: true
+          required_review_thread_resolution: true
+          allowed_merge_methods:
+            - squash
+            # - type: required_status_checks
+    bypass_actors:
+      - actor_id: 5
+        actor_type: RepositoryRole
+        bypass_mode: always
+  - name: Prevent deletion of release tags
+    target: tag
+    enforcement: active
+    conditions:
+      ref_name:
+        include:
+          - refs/tags/v*
+        exclude: []
+    rules:
+      - type: deletion
+  - name: Prevent tampering with release tags
+    target: tag
+    enforcement: active
+    conditions:
+      ref_name:
+        include:
+          - refs/tags/v*.*.*
+        exclude: []
+    rules:
+      - type: non_fast_forward
+      - type: update
+        # labels: []

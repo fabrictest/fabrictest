@@ -1,0 +1,141 @@
+{ lib, pkgs, ... }:
+let
+
+  my = import ../../my pkgs;
+
+  mailboxes = lib.pipe ./mailboxes.nix [
+    import
+    (lib.concat [
+      {
+        # caixa@decorre.io - the true admin
+        name = "F. Emerson";
+        local_part = "caixa";
+        domain_name = "decorre.io";
+      }
+    ])
+    (lib.map (
+      lib.mergeAttrs {
+        domain_name = "caixadecorre.io";
+        may_access_imap = true;
+        may_access_manage_sieve = true;
+        may_access_pop3 = true;
+        may_send = true;
+        may_receive = true;
+      }
+    ))
+  ];
+
+  resource.migadu_mailbox = my.mapToAttrs (
+    { domain_name, local_part, ... }@mailbox:
+    let
+      resourceId = "${lib.replaceString "." "_" domain_name}_${local_part}";
+      resource = mailbox // {
+        password = lib.tfRef "random_password.${resourceId}.result";
+      };
+    in
+    lib.nameValuePair resourceId resource
+  ) mailboxes;
+
+  resource.random_password = lib.mapAttrs (
+    _:
+    { domain_name, local_part, ... }:
+    {
+      keepers = {
+        inherit domain_name local_part;
+      };
+      length = 64;
+    }
+  ) resource.migadu_mailbox;
+
+  # m@caixadecorre.io -> emerson@caixadecorre.io
+  resource.migadu_identity.caixadecorre_io_m =
+    let
+      resource = "migadu_mailbox.caixadecorre_io_emerson";
+    in
+    {
+      identity = "m";
+      domain_name = lib.tfRef "${resource}.domain_name";
+      local_part = lib.tfRef "${resource}.local_part";
+      name = lib.tfRef "${resource}.name";
+      password_use = "none";
+      may_send = true;
+      may_receive = true;
+    };
+
+  # FIXME(eff): The resources below must be refactored into a format similar to
+  # the above. They're good enough as they are, and I don't expect to set up
+  # aliases or identities externally, so we aren't touching them yet.
+
+  # caix@decorre.io -> caixa@decorre.io
+  resource.migadu_identity.decorre_io_caix =
+    let
+      resource = "migadu_mailbox.decorre_io_caixa";
+    in
+    {
+      identity = "caix";
+      domain_name = lib.tfRef "${resource}.domain_name";
+      local_part = lib.tfRef "${resource}.local_part";
+      name = lib.tfRef "${resource}.name";
+      password_use = "none";
+      may_send = true;
+      may_receive = true;
+    };
+
+  forwardTo = resource: local_part: {
+    domain_name = lib.tfRef "${resource}.domain_name";
+    inherit local_part;
+    destinations = [ (lib.tfRef "${resource}.address") ];
+  };
+
+  forwardToM = forwardTo "migadu_mailbox.caixadecorre_io_emerson";
+  resource.migadu_alias.caixadecorre_io_admin = forwardToM "admin";
+  resource.migadu_alias.caixadecorre_io_abuse = forwardToM "abuse";
+  resource.migadu_alias.caixadecorre_io_noc = forwardToM "noc";
+  resource.migadu_alias.caixadecorre_io_security = forwardToM "security";
+  resource.migadu_alias.caixadecorre_io_postmaster = forwardToM "postmaster";
+  resource.migadu_alias.caixadecorre_io_webmaster = forwardToM "webmaster";
+
+  forwardToCaixa = forwardTo "migadu_mailbox.decorre_io_caixa";
+  resource.migadu_alias.decorre_io_admin = forwardToCaixa "admin";
+  resource.migadu_alias.decorre_io_abuse = forwardToCaixa "abuse";
+  resource.migadu_alias.decorre_io_noc = forwardToCaixa "noc";
+  resource.migadu_alias.decorre_io_security = forwardToCaixa "security";
+  resource.migadu_alias.decorre_io_postmaster = forwardToCaixa "postmaster";
+  resource.migadu_alias.decorre_io_webmaster = forwardToCaixa "webmaster";
+
+  # NOTE(eff): Migadu creates a folder for each plus-address by default. The
+  # following rewrite rule disables this feature—all e-mails land into INBOX.
+  plus2inbox =
+    order_num: resource:
+    let
+      outputRef = output: lib.tfRef "${resource}.${output}";
+      domain_name = outputRef "domain_name";
+      local_part = outputRef "local_part";
+      identity = outputRef (
+        if lib.hasPrefix "migadu_identity." resource then "identity" else "local_part"
+      );
+    in
+    {
+      name = "${identity}: route messages sent to plus-addresses to the main inbox";
+      inherit order_num domain_name;
+      local_part_rule = "${identity}+*";
+      destinations = [
+        "${local_part}@${domain_name}"
+      ];
+    };
+
+  resource.migadu_rewrite_rule.caixadecorre_io_plus2inbox_emerson = plus2inbox 1 "migadu_mailbox.caixadecorre_io_emerson";
+  resource.migadu_rewrite_rule.caixadecorre_io_plus2inbox_m = plus2inbox 2 "migadu_identity.caixadecorre_io_m";
+
+  resource.migadu_rewrite_rule.decorre_io_plus2inbox_caixa = plus2inbox 1 "migadu_mailbox.decorre_io_caixa";
+in
+{
+  imports = [
+    ../../modules/backend/git.nix
+    ../../modules/providers/migadu.nix
+  ];
+
+  backend.git.state = "services/migadu/live";
+
+  inherit resource;
+}

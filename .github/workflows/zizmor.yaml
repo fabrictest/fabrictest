@@ -1,0 +1,52 @@
+---
+name: zizmor
+"on":
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+    branches:
+      - main
+    paths:
+      - .github/workflows/**.yaml
+      - "**/action.yaml"
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/**.yaml
+      - "**/action.yaml"
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref_name != github.event.repository.default_branch }}
+permissions: {}
+jobs:
+  lint:
+    name: Lint GitHub actions and workflows
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    steps:
+      - name: Install zizmor
+        run: |
+          pipx run --quiet -- zizmor --version
+      - name: Check out repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Lint Github actions and workflows
+        run: |
+          pipx run --quiet -- zizmor --verbose --format=sarif --gh-hostname="${GITHUB_SERVER_URL#*://}" --persona=auditor . >"$sarif_file"
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          sarif_file: ${{ runner.temp }}/${{ github.workflow }}.sarif
+      - name: Upload SARIF report to GitHub
+        if: ${{ always() }}
+        uses: github/codeql-action/upload-sarif@4e828ff8d448a8a6e532957b1811f387a63867e8 # v3.29.4
+        with:
+          category: ${{ github.workflow }}
+          sarif_file: ${{ runner.temp }}/${{ github.workflow }}.sarif

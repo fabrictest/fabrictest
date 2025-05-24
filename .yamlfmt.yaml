@@ -1,0 +1,8 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/google/yamlfmt/main/schema.json
+line_ending: lf
+gitignore_excludes: true
+formatter:
+  type: basic
+  include_document_start: true
+  scan_folder_as_literal: true

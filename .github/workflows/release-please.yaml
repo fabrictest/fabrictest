@@ -1,0 +1,29 @@
+---
+name: Release Please
+"on":
+  push:
+    branches:
+      - main
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+permissions: {}
+jobs:
+  release:
+    name: Release components
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate app token
+        id: app-token
+        uses: actions/create-github-app-token@df432ceedc7162793a195dd1713ff69aefc7379e # v2.0.6
+        with:
+          app-id: ${{ vars.MADDERFERRYS_APP_ID }}
+          private-key: ${{ secrets.MADDERFERRYS_PRIVATE_KEY }}
+      - name: Run release process
+        id: release
+        uses: googleapis/release-please-action@a02a34c4d625f9be7cb89156071d8567266a2445 # v4.2.0
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          config-file: .release-please-config.json
+          manifest-file: .release-please-manifest.json
+          target-branch: ${{ github.ref_name }}

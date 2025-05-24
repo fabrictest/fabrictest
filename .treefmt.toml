@@ -1,0 +1,96 @@
+[global]
+excludes = ["*.lock", "CODEOWNERS", ".editorconfig", ".gitignore"]
+
+# region *
+
+[formatter.keep-sorted]
+includes = ["*"]
+command = "keep-sorted"
+priority = 10
+
+# endregion
+
+# region JSON
+
+[formatter.jsonfmt]
+includes = ["*.json"]
+excludes = [".zed/*"]
+command = "jsonfmt"
+options = ["--write"]
+
+# endregion
+
+# region Markdown
+
+[formatter.mdsh]
+includes = ["*.md"]
+command = "sh"
+options = ["-c", 'for file in "$@"; do mdsh --inputs "$file"; done']
+priority = -10
+
+[formatter.mdformat]
+includes = ["*.md"]
+command = "mdformat"
+
+# endregion
+
+# region Nix
+
+[formatter.deadnix]
+includes = ["*.nix"]
+command = "deadnix"
+options = ["--edit", "--quiet"]
+priority = -10
+
+[formatter.nixfmt]
+includes = ["*.nix"]
+command = "nixfmt"
+
+[formatter.statix]
+includes = ["*.nix"]
+excludes = [".direnv*", ".devenv*"]
+command = "sh"
+options = ["-c", 'for file in "$@"; do statix fix "$file"; done']
+priority = -10
+
+# endregion
+
+# region Ruby
+
+[formatter.rubocop]
+includes = ["*Brewfile"]
+command = "rubocop"
+options = ["--auto-correct-all"]
+
+# endregion
+
+# region Shell
+
+[formatter.shfmt]
+includes = ["*.bash", "*.envrc*", "*.sh"]
+command = "shfmt"
+options = ["--simplify", "--write"]
+
+# endregion
+
+# region TOML
+
+[formatter.taplo]
+includes = ["*.toml"]
+command = "taplo"
+options = ["format"]
+
+# endregion
+
+# region YAML
+
+[formatter.yamlfmt]
+includes = ["*.yaml"]
+command = "yamlfmt"
+
+[formatter.yamllint]
+includes = ["*.yaml"]
+command = "yamllint"
+priority = -10
+
+# endregion
