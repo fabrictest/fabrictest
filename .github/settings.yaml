@@ -3,7 +3,7 @@ repository:
   name: fabrictest
   description: WIP
   homepage: https://fabricte.st
-  topics: nix,wip
+  topics: nix, wip
   private: false
   visibility: public
   has_issues: true
