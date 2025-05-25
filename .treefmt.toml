@@ -97,10 +97,4 @@ includes = ["*.yaml"]
 command = "yamllint"
 priority = -10
 
-[formatter.zizmor]
-includes = [".github/workflows/*.yaml", "*/action.yaml"]
-command = "zizmor"
-options = ["--persona=auditor"]
-priority = 90
-
 # endregion
