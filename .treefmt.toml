@@ -23,8 +23,8 @@ options = ["--write"]
 
 [formatter.mdsh]
 includes = ["*.md"]
-command = "mdsh"
-options = ["--inputs"]
+command = "sh"
+options = ["-c", 'for file in "$@"; do mdsh --inputs "$file"; done']
 priority = -10
 
 [formatter.mdformat]
@@ -48,7 +48,8 @@ command = "nixfmt"
 [formatter.statix]
 includes = ["*.nix"]
 excludes = [".direnv*", ".devenv*"]
-command = "statix-fix"
+command = "sh"
+options = ["-c", 'for file in "$@"; do statix fix "$file"; done']
 priority = -10
 
 # endregion

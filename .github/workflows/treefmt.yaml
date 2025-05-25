@@ -39,7 +39,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Format files
-        run: treefmt -vvv
+        run: treefmt --ci -vvv
       - name: Collect changes
         id: diff
         run: |

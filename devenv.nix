@@ -28,49 +28,37 @@ in
   git-hooks = {
     hooks.treefmt = {
       enable = true;
-      settings.formatters =
-        let
-          statix-fix = pkgs.writeShellApplication {
-            name = "statix-fix";
-            runtimeInputs = [ pkgs.statix ];
-            text = ''
-              for file in "''$@"; do
-                statix fix "''$file"
-              done
-            '';
-          };
-        in
-        [
-          # *
-          pkgs.keep-sorted
+      settings.formatters = [
+        # *
+        pkgs.keep-sorted
 
-          # JSON
-          pkgs.jsonfmt
+        # JSON
+        pkgs.jsonfmt
 
-          # Markdown
-          pkgs.mdformat
-          pkgs.mdsh
+        # Markdown
+        pkgs.mdformat
+        pkgs.mdsh
 
-          # Nix
-          pkgs.deadnix
-          pkgs.nixfmt-rfc-style
-          statix-fix
+        # Nix
+        pkgs.deadnix
+        pkgs.nixfmt-rfc-style
+        pkgs.statix
 
-          # Ruby
-          pkgs.rubocop
+        # Ruby
+        pkgs.rubocop
 
-          # Shell
-          pkgs.shfmt
+        # Shell
+        pkgs.shfmt
 
-          # TOML
-          pkgs.taplo
+        # TOML
+        pkgs.taplo
 
-          # YAML
-          pkgs.actionlint # GitHub Actions
-          pkgs.yamlfmt
-          pkgs.yamllint
-          pkgs.zizmor # GitHub Actions
-        ];
+        # YAML
+        pkgs.actionlint # GitHub Actions
+        pkgs.yamlfmt
+        pkgs.yamllint
+        pkgs.zizmor # GitHub Actions
+      ];
     };
 
     # TODO(eff): Should we add linters to treefmt as well?
