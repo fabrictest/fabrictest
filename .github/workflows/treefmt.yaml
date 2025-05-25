@@ -11,16 +11,18 @@ name: treefmt
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
-permissions:
-  contents: read
+permissions: {}
 defaults:
   run:
     shell: devenv shell bash -- -e {0}
 jobs:
-  treefmt:
+  format:
     name: Format changes
     if: ${{ github.event.sender.login != 'the-accuser[bot]' }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - name: Install Nix
         uses: DeterminateSystems/determinate-nix-action@441b9e401ac050c38a07d8313748c5c2d17e8aff # v3.6.1
