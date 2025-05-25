@@ -28,26 +28,26 @@ collaborators:
   - username: tautologicc
     permission: admin
 rulesets:
-  - target: branch
-    name: Prevent tampering with default branch
+  - name: Prevent tampering with default branch
+    target: branch
     enforcement: active
     conditions:
       ref_name:
         include:
-          - ~DEFAULT_BRANCH
+          - "~DEFAULT_BRANCH"
         exclude: []
     rules:
       - type: deletion
       - type: non_fast_forward
       - type: required_linear_history
       - type: required_signatures
-  - target: branch
-    name: Require PRs to the default branch to pass the quality bar
+  - name: Require PRs to the default branch to pass the quality bar
+    target: branch
     enforcement: active
     conditions:
       ref_name:
         include:
-          - ~DEFAULT_BRANCH
+          - "~DEFAULT_BRANCH"
         exclude: []
     rules:
       - type: pull_request
@@ -64,8 +64,8 @@ rulesets:
       - actor_id: 5
         actor_type: RepositoryRole
         bypass_mode: always
-  - target: tag
-    name: Prevent deletion of release tags
+  - name: Prevent deletion of release tags
+    target: tag
     enforcement: active
     conditions:
       ref_name:
@@ -74,8 +74,8 @@ rulesets:
         exclude: []
     rules:
       - type: deletion
-  - target: tag
-    name: Prevent tampering with release tags
+  - name: Prevent tampering with release tags
+    target: tag
     enforcement: active
     conditions:
       ref_name:
