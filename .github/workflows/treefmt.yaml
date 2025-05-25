@@ -41,7 +41,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Run formatters
-        run: treefmt --ci -vvv
+        run: treefmt -vvv
       - name: Collect changes
         id: diff
         run: |
