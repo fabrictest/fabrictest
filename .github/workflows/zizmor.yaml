@@ -37,13 +37,14 @@ jobs:
       - name: Lint Github actions and workflows
         run: |
           pipx run --quiet -- \
-          zizmor --verbose --format=sarif --gh-hostname="${GITHUB_SERVER_URL#*://}" --persona=auditor . >zizmor.sarif
+          zizmor --verbose --format=sarif --gh-hostname="${GITHUB_SERVER_URL#*://}" --persona=auditor . >"$sarif_file"
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
+          sarif_file: ${{ runner.temp }}/${{ github.workflow }}.sarif
       - name: Upload SARIF report to GitHub
         if: ${{ always() }}
         uses: github/codeql-action/upload-sarif@ff0a06e83cb2de871e5a09832bc6a81e7276941f # v3.28.18
         with:
-          category: zizmor
-          sarif_file: zizmor.sarif
+          category: ${{ github.workflow }}
+          sarif_file: ${{ runner.temp }}/${{ github.workflow }}.sarif
