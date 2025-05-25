@@ -54,14 +54,16 @@ in
         pkgs.taplo
 
         # YAML
-        pkgs.actionlint # GitHub Actions
         pkgs.yamlfmt
         pkgs.yamllint
-        pkgs.zizmor # GitHub Actions
       ];
     };
 
     # TODO(eff): Should we add linters to treefmt as well?
+
+    hooks.actionlint = {
+      enable = true;
+    };
 
     hooks.editorconfig-checker = {
       enable = true;
@@ -70,6 +72,8 @@ in
     hooks.shellcheck = {
       enable = true;
     };
+
+    # TODO(eff): Add a new hook for zizmor.
   };
 
   enterTest = '''';

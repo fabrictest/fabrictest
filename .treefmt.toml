@@ -83,11 +83,6 @@ options = ["format"]
 
 # region YAML
 
-[formatter.actionlint]
-includes = [".github/workflows/*.yaml", "*/action.yaml"]
-command = "actionlint"
-priority = 90
-
 [formatter.yamlfmt]
 includes = ["*.yaml"]
 command = "yamlfmt"
