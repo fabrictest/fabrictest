@@ -23,6 +23,7 @@ in
 
   cachix = {
     enable = true;
+    push = "fabrictest";
   };
 
   git-hooks = {
