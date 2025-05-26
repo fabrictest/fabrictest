@@ -90,5 +90,7 @@ in
 
   apple.sdk = null;
 
+  delta.enable = true;
+
   difftastic.enable = true;
 }
