@@ -5,8 +5,17 @@ devenv.local.nix
 # direnv
 .direnv
 
+# dotenv
+.env
+
 # macOS
 .DS_Store
 
 # pre-commit
 .pre-commit-config.yaml
+
+# terraform
+.terraform*
+
+# terranix
+config.tf.json

@@ -7,19 +7,28 @@ let
   l = lib // builtins;
 in
 {
-  enterShell = ''
-    test -n "''${CI+x}" ||
-    ${l.getExe' pkgs.cowsay "cowsay"} 'Welcome to Fabric Test. devenv(1) is your friend.'
-  '';
+  enterShell = '''';
 
   packages = [
     pkgs.git
     pkgs.terranix
   ];
 
+  #tasks
+
   languages.terraform = {
     enable = true;
   };
+
+  processes.terraform-backend-git = rec {
+    exec = l.getExe pkgs.terraform-backend-git;
+    process-compose = {
+      availability.restart = "on_failure";
+      shutdown.command = "${exec} stop";
+    };
+  };
+
+  #services
 
   cachix = {
     enable = true;
@@ -93,4 +102,6 @@ in
   delta.enable = true;
 
   difftastic.enable = true;
+
+  dotenv.enable = true;
 }
