@@ -1,26 +1,18 @@
-{ ... }:
 {
   imports = [
-    ../../modules/backend/git
-    ../../modules/providers/cloudflare
-    ../../modules/providers/migadu
-    ../../modules/migadu
+    ../../modules/backend/git.nix
+    ../../modules/providers/migadu.nix
+    ../../modules/migadu.nix
   ];
 
-  backend.git.path = "migadu/live";
+  backend.git.state = "services/migadu/live";
 
-  migadu = {
-    domains = {
-      primary = {
-        name = "fabricte.st";
-        verification = "vsgdzd9q";
-      };
-      aliases = [
-        {
-          name = "bricte.st";
-          verification = "xraav1ee";
-        }
-      ];
+  migadu.domain.caixadecorre_io = {
+    primary = {
+      name = "caixadecorre.io";
+      verify = "tloqjtbj";
     };
+    aliases = [
+    ];
   };
 }

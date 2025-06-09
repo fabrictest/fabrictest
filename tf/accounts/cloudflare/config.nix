@@ -1,14 +1,11 @@
 { lib, ... }:
-let
-  l = lib // builtins;
-in
 {
   imports = [
-    ../../modules/backend/git
-    ../../modules/providers/cloudflare
+    ../../modules/backend/git.nix
+    ../../modules/providers/cloudflare.nix
   ];
 
-  backend.git.path = "accounts/cloudflare/live";
+  backend.git.state = "accounts/cloudflare/live";
 
   resource.cloudflare_account.fabrictest = {
     name = "Fabric Test";
@@ -19,5 +16,5 @@ in
     };
   };
 
-  output.account_id.value = l.tfRef "cloudflare_account.fabrictest.id";
+  output.account_id.value = lib.tfRef "cloudflare_account.fabrictest.id";
 }

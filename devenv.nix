@@ -12,6 +12,11 @@ in
   packages = [
     pkgs.git
     pkgs.terranix
+
+    # Zed
+    pkgs.nil
+    pkgs.nixd
+    pkgs.zed-editor
   ];
 
   #tasks

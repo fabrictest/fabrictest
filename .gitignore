@@ -16,6 +16,7 @@ devenv.local.nix
 
 # terraform
 .terraform*
+terraform.tfstate*
 
 # terranix
 config.tf.json

@@ -14,6 +14,7 @@ priority = 10
 
 [formatter.jsonfmt]
 includes = ["*.json"]
+excludes = [".zed/*"]
 command = "jsonfmt"
 options = ["--write"]
 
