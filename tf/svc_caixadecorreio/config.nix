@@ -289,6 +289,37 @@ let
     may_receive = true;
   };
 
+  resource.migadu_alias =
+    with resource.migadu_mailbox.caixadecorre_io_emerson;
+    my.mapToAttrs
+      (local_part: {
+        name = "caixadecorre_io_${local_part}";
+        value = {
+          inherit domain_name local_part;
+          destinations = [
+            (lib.tfRef "migadu_mailbox.caixadecorre_io_emerson.id")
+          ];
+        };
+      })
+      [
+        "abuse"
+        "noc"
+        "security"
+        "postmaster"
+        "webmaster"
+      ];
+
+  resource.migadu_rewrite_rule.caixadecorre_io_plus2inbox_emerson =
+    with resource.migadu_mailbox.caixadecorre_io_emerson; {
+      name = "${local_part}: route messages sent to plus-addresses to the main inbox";
+      inherit domain_name;
+      local_part_rule = "${local_part}+*";
+      destinations = [
+        (lib.tfRef "migadu_mailbox.caixadecorre_io_emerson.id")
+      ];
+      order_num = 1;
+    };
+
 in
 {
   imports = [
