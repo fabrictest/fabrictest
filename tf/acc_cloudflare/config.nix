@@ -1,8 +1,11 @@
 { lib, ... }:
+let
+  modules = import ../mod;
+in
 {
   imports = [
-    ../../modules/backend/git.nix
-    ../../modules/providers/cloudflare.nix
+    modules.backend.git
+    modules.providers.cloudflare
   ];
 
   backend.git.state = "accounts/cloudflare/live";
@@ -16,5 +19,8 @@
     };
   };
 
-  output.account_id.value = lib.tfRef "cloudflare_account.fabrictest.id";
+  output.id = {
+    description = "ID of the account";
+    value = lib.tfRef "cloudflare_account.fabrictest.id";
+  };
 }

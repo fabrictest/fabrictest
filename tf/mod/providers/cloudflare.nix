@@ -2,29 +2,29 @@
 let
   cfg = config.providers.cloudflare;
 
-  var.api_token = lib.tfRef "var.cloudflare_api_token";
-
-  modules.settings = {
-    options.api_token = lib.mkOption {
-      description = "Token for accessing the Cloudflare API";
-      type = lib.types.str;
-      default = var.api_token;
-    };
-  };
+  var.token = lib.tfRef "var.cloudflare_token";
 in
 {
   options.providers.cloudflare = lib.mkOption {
     description = "Settings for the Cloudflare provider";
-    type = lib.types.submodule modules.settings;
+    type =
+      with lib.types;
+      submodule {
+        options.token = lib.mkOption {
+          description = "Token for accessing the Cloudflare API";
+          type = str;
+          default = var.token;
+        };
+      };
     default = { };
   };
 
   config = {
     terraform.required_providers.cloudflare.source = "cloudflare/cloudflare";
 
-    provider.cloudflare = cfg;
+    provider.cloudflare.api_token = cfg.token;
 
-    variable.cloudflare_api_token = lib.mkIf (cfg.api_token == var.api_token) {
+    variable.cloudflare_token = lib.mkIf (cfg.token == var.token) {
       description = "Token for accessing the Cloudflare API";
       type = "string";
       sensitive = true;

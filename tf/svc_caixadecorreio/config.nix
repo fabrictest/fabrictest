@@ -1,26 +1,61 @@
-{
-  config,
-  lib,
-  pkgs,
-  ...
-}:
+{ lib, pkgs, ... }:
 let
-  cfg = config.migadu;
+  domains =
+    my.mapToAttrs
+      (value: {
+        name = lib.replaceString "." "_" value.name;
+        inherit value;
+      })
+      [
+        {
+          name = "caixadecorre.io";
+          verify = "tloqjtbj";
+          primary = true;
+        }
+        {
+          name = "decorre.io";
+          verify = "l9ax4axw";
+        }
+      ];
 
-  data.terraform_remote_state.network = my.tfRemoteState ../network/config.nix;
+  my = import ../lib pkgs;
 
-  my = import ../lib { inherit pkgs; };
+  modules = import ../mod;
+
+  data.terraform_remote_state = my.tfRemoteStates [
+    "acc_cloudflare"
+    "net_fabrictest"
+  ];
+
+  resource.cloudflare_zone = lib.mapAttrs (
+    _:
+    { name, ... }:
+    {
+      account.id = lib.tfRef "data.terraform_remote_state.acc_cloudflare.outputs.id";
+      inherit name;
+      type = "full";
+    }
+  ) domains;
+
+  resource.cloudflare_zone_dns_settings = lib.mapAttrs (slug: _: {
+    zone_id = lib.tfRef "cloudflare_zone.${slug}.id";
+    nameservers.type = "cloudflare.standard";
+  }) resource.cloudflare_zone;
+
+  resource.cloudflare_zone_dnssec = lib.mapAttrs (slug: _: {
+    zone_id = lib.tfRef "cloudflare_zone.${slug}.id";
+    status = "active";
+  }) resource.cloudflare_zone;
 
   dnsRecordsFor =
+    slug:
     {
       name,
       verify,
-      primary,
-      tags,
+      primary ? false,
     }:
     let
-      slug = lib.replaceString "." "_" name;
-      zone_id = lib.tfRef "data.terraform_remote_state.network.outputs.zone_${slug}_id";
+      zone_id = lib.tfRef "cloudflare_zone.${slug}.id";
 
       proto = "_tcp";
 
@@ -47,7 +82,7 @@ let
             (lib.map (
               { record, server }:
               lib.nameValuePair "${server}_${record.type}" {
-                inherit tags zone_id;
+                inherit zone_id;
                 inherit (record) name;
                 comment = "Mail eXchanger host #${server} (${record.type})";
                 content = "aspmx${server}.migadu.com";
@@ -73,7 +108,7 @@ let
             (lib.map (
               { server }:
               lib.nameValuePair server {
-                inherit tags zone_id;
+                inherit zone_id;
                 type = "CNAME";
                 name = "key${server}._domainkey.${name}";
                 content = "key${server}.${name}._domainkey.migadu.com";
@@ -88,7 +123,7 @@ let
       records.others =
         {
           verification = {
-            inherit tags zone_id name;
+            inherit zone_id name;
             type = "TXT";
             content = ''"hosted-email-verify=${verify}"'';
             ttl = 1;
@@ -96,7 +131,7 @@ let
           };
 
           spf = {
-            inherit tags zone_id name;
+            inherit zone_id name;
             type = "TXT";
             content = ''"v=spf1 include:spf.migadu.com -all"'';
             ttl = 1;
@@ -104,7 +139,7 @@ let
           };
 
           dmarc = {
-            inherit tags zone_id;
+            inherit zone_id;
             name = "_dmarc.${name}";
             type = "TXT";
             content = ''"v=DMARC1; p=quarantine;"'';
@@ -114,7 +149,7 @@ let
         }
         // lib.optionalAttrs primary {
           autoconfig = {
-            inherit tags zone_id;
+            inherit zone_id;
             type = "CNAME";
             name = "autoconfig.${name}";
             content = "autoconfig.migadu.com";
@@ -124,7 +159,7 @@ let
           };
 
           autodiscover = {
-            inherit tags zone_id;
+            inherit zone_id;
             type = "SRV";
             name = "_autodiscover.${proto}.${name}";
             data = {
@@ -140,7 +175,7 @@ let
           };
 
           smtp = {
-            inherit tags zone_id;
+            inherit zone_id;
             type = "SRV";
             name = "_submissions.${proto}.${name}";
             data = {
@@ -156,7 +191,7 @@ let
           };
 
           imap = {
-            inherit tags zone_id;
+            inherit zone_id;
             type = "SRV";
             name = "_imaps.${proto}.${name}";
             data = {
@@ -172,7 +207,7 @@ let
           };
 
           pop = {
-            inherit tags zone_id;
+            inherit zone_id;
             type = "SRV";
             name = "_pop3s.${proto}.${name}";
             data = {
@@ -199,71 +234,70 @@ let
       (lib.foldl' lib.mergeAttrs { })
     ];
 
-  domainSubmodule =
-    {
-      primary ? false,
-    }:
-    lib.types.submodule {
-      options.name = lib.mkOption {
-        description = "Name of the DNS zone";
-        type = lib.types.str;
-      };
+  resource.cloudflare_dns_record = lib.pipe domains [
+    (lib.mapAttrsToList dnsRecordsFor)
+    (lib.foldl' lib.mergeAttrs { })
+  ];
 
-      options.verify = lib.mkOption {
-        description = "Token used for DNS verification on the Migadu side";
-        type = lib.types.str;
-      };
+  # emerson@caixadecorre.io
+  resource.migadu_mailbox.caixadecorre_io_emerson = {
+    domain_name = "caixadecorre.io";
+    local_part = "emerson";
+    name = "F. Emerson";
+    password = lib.tfRef "random_password.caixadecorre_io_emerson.result";
+    may_access_imap = true;
+    may_access_manage_sieve = true;
+    may_access_pop3 = true;
+    may_send = true;
+    may_receive = true;
+  };
 
-      options.primary = lib.mkOption {
-        default = primary;
-        internal = true;
-        readOnly = true;
-      };
-    };
+  resource.random_password.caixadecorre_io_emerson = {
+    keepers.address =
+      with resource.migadu_mailbox.caixadecorre_io_emerson;
+      "${local_part}@${domain_name}";
+    length = 64;
+  };
+
+  # m@caixadecorre.io -> emerson@caixadecorre.io
+  resource.migadu_identity.caixadecorre_io_m = {
+    depends_on = [ "migadu_mailbox.caixadecorre_io_emerson" ];
+    inherit (resource.migadu_mailbox.caixadecorre_io_emerson) domain_name local_part name;
+    identity = "m";
+    password_use = "none";
+    may_send = true;
+    may_receive = true;
+  };
+
+  # caix@decorre.io -> emerson@caixadecorre.io
+  resource.migadu_identity.caixadecorre_io_caix = {
+    depends_on = [ "migadu_mailbox.caixadecorre_io_emerson" ];
+    inherit (resource.migadu_mailbox.caixadecorre_io_emerson) domain_name local_part name;
+    identity = "caix";
+    password_use = "none";
+    may_send = true;
+    may_receive = true;
+  };
+
+  # *@caixa.decorre.io -> emerson+*@caixadecorre.io
+  resource.migadu_identity.caixadecorre_io_caixa = {
+    depends_on = [ "migadu_mailbox.caixadecorre_io_emerson" ];
+    inherit (resource.migadu_mailbox.caixadecorre_io_emerson) domain_name local_part name;
+    identity = "caixa";
+    password_use = "none";
+    may_send = true;
+    may_receive = true;
+  };
+
 in
 {
   imports = [
-    ./providers/cloudflare
+    modules.backend.git
+    modules.providers.cloudflare
+    modules.providers.migadu
   ];
 
-  options.migadu.domain = lib.mkOption {
-    description = "Domains where mailboxes are available";
-    type = lib.types.attrsOf (
-      lib.types.submodule {
-        options.primary = lib.mkOption {
-          type = domainSubmodule { primary = true; };
-        };
+  backend.git.state = "services/migadu/live";
 
-        options.aliases = lib.mkOption {
-          type = lib.types.listOf (domainSubmodule { });
-          default = [ ];
-        };
-
-        options.tags = lib.mkOption {
-          type = lib.types.listOf lib.types.str;
-          default = [ ];
-        };
-      }
-    );
-  };
-
-  config = {
-    inherit data;
-
-    resource.cloudflare_dns_record = lib.pipe cfg.domain [
-      (lib.mapAttrsToList (
-        _: d:
-        lib.pipe
-          [ d.primary ]
-          [
-            (lib.concat d.aliases)
-            (lib.map (lib.mergeAttrs { inherit (d) tags; }))
-          ]
-      ))
-      lib.flatten
-      (lib.map dnsRecordsFor)
-      (lib.foldl' lib.mergeAttrs { })
-    ];
-  };
-
+  inherit data resource;
 }

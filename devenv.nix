@@ -98,6 +98,7 @@ in
       terraform = prev.opentofu.withPlugins (p: [
         p.cloudflare
         p.migadu
+        p.random
       ]);
     })
   ];

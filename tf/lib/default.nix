@@ -1,26 +1,30 @@
-{ pkgs }:
+{ lib, terranix, ... }@pkgs:
 rec {
 
-  tfConfig = path: tfConfigWith { modules = [ path ]; };
+  tfRemoteStates = mapToAttrs (name: {
+    inherit name;
+    value = tfRemoteState name;
+  });
 
-  tfConfigWith =
-    {
-      modules,
-    }:
-    import (pkgs.terranix + /core) {
-      inherit pkgs;
-      terranix_config.imports = modules;
+  tfRemoteState =
+    name:
+    tfRemoteStateWith {
+      modules = [ ../${name}/config.nix ];
     };
 
-  tfRemoteState = path: tfRemoteStateWith { modules = [ path ]; };
-
   tfRemoteStateWith =
-    {
-      modules,
-    }:
+    { modules }:
     rec {
       backend = "http";
       config = (tfConfigWith { inherit modules; }).config.terraform.backend.${backend};
     };
 
+  tfConfigWith =
+    { modules }:
+    import (terranix + /core) {
+      inherit pkgs;
+      terranix_config.imports = modules;
+    };
+
+  mapToAttrs = f: l: lib.listToAttrs (lib.map f l);
 }
