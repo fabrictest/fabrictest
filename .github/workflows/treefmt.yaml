@@ -59,7 +59,7 @@ jobs:
           private-key: ${{ secrets.THE_ACCUSER_PRIVATE_KEY }}
       - name: Commit changes
         if: ${{ steps.diff.outputs.files }}
-        uses: IAreKyleW00t/verified-bot-commit@29b641455ab27bc012ce6b3147e271d661b48a4a # v1.3.5
+        uses: IAreKyleW00t/verified-bot-commit@8665f54bc1cc6df4607f5f9c7480ec4f23a371bc # v1.3.8
         with:
           files: ${{ steps.diff.outputs.files }}
           message: "style: format changes"
