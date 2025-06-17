@@ -79,7 +79,7 @@ let
           }
           [
             lib.cartesianProduct
-            (lib.map (
+            (my.mapToAttrs (
               { record, server }:
               lib.nameValuePair "${server}_${record.type}" {
                 inherit zone_id;
@@ -91,7 +91,6 @@ let
                 type = "MX";
               }
             ))
-            lib.listToAttrs
           ];
 
       records.dkim =
@@ -105,7 +104,7 @@ let
           }
           [
             lib.cartesianProduct
-            (lib.map (
+            (my.mapToAttrs (
               { server }:
               lib.nameValuePair server {
                 inherit zone_id;
@@ -117,7 +116,6 @@ let
                 comment = "DKIM+ARC key #${server}";
               }
             ))
-            lib.listToAttrs
           ];
 
       records.others =
