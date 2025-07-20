@@ -2,7 +2,7 @@
 rec {
 
   tfRemoteStates = mapToAttrs (name: {
-    inherit name;
+    name = lib.replaceString "/" "_" name;
     value = tfRemoteState name;
   });
 

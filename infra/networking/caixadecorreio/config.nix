@@ -1,5 +1,7 @@
-{ lib, pkgs, ... }:
+{ pkgs, lib, ... }:
 let
+  my = import ../../my pkgs;
+
   domains =
     my.mapToAttrs
       (value: {
@@ -9,29 +11,21 @@ let
       [
         {
           name = "caixadecorre.io";
-          verify = "tloqjtbj";
-          primary = true;
+          hosted-email-verify = "tloqjtbj";
         }
         {
           name = "decorre.io";
-          verify = "l9ax4axw";
+          hosted-email-verify = "y07nuop4";
         }
       ];
 
-  my = import ../lib pkgs;
-
-  modules = import ../mod;
-
-  data.terraform_remote_state = my.tfRemoteStates [
-    "acc_cloudflare"
-    "net_fabrictest"
-  ];
+  data.terraform_remote_state = my.tfRemoteStates [ "accounts/cloudflare" ];
 
   resource.cloudflare_zone = lib.mapAttrs (
     _:
     { name, ... }:
     {
-      account.id = lib.tfRef "data.terraform_remote_state.acc_cloudflare.outputs.id";
+      account.id = lib.tfRef "data.terraform_remote_state.accounts_cloudflare.outputs.id";
       inherit name;
       type = "full";
     }
@@ -40,6 +34,11 @@ let
   resource.cloudflare_zone_dns_settings = lib.mapAttrs (slug: _: {
     zone_id = lib.tfRef "cloudflare_zone.${slug}.id";
     nameservers.type = "cloudflare.standard";
+    zone_mode = "standard";
+    flatten_all_cnames = false;
+    foundation_dns = false;
+    multi_provider = false;
+    secondary_overrides = false;
   }) resource.cloudflare_zone;
 
   resource.cloudflare_zone_dnssec = lib.mapAttrs (slug: _: {
@@ -51,8 +50,8 @@ let
     slug:
     {
       name,
-      verify,
-      primary ? false,
+      hosted-email-verify,
+      alias ? false,
     }:
     let
       zone_id = lib.tfRef "cloudflare_zone.${slug}.id";
@@ -123,7 +122,7 @@ let
           verification = {
             inherit zone_id name;
             type = "TXT";
-            content = ''"hosted-email-verify=${verify}"'';
+            content = ''"hosted-email-verify=${hosted-email-verify}"'';
             ttl = 1;
             comment = "Migadu verification record";
           };
@@ -145,7 +144,7 @@ let
             comment = "DMARC policy";
           };
         }
-        // lib.optionalAttrs primary {
+        // lib.optionalAttrs (!alias) {
           autoconfig = {
             inherit zone_id;
             type = "CNAME";
@@ -237,96 +236,14 @@ let
     (lib.foldl' lib.mergeAttrs { })
   ];
 
-  # emerson@caixadecorre.io
-  resource.migadu_mailbox.caixadecorre_io_emerson = {
-    domain_name = "caixadecorre.io";
-    local_part = "emerson";
-    name = "F. Emerson";
-    password = lib.tfRef "random_password.caixadecorre_io_emerson.result";
-    may_access_imap = true;
-    may_access_manage_sieve = true;
-    may_access_pop3 = true;
-    may_send = true;
-    may_receive = true;
-  };
-
-  resource.random_password.caixadecorre_io_emerson = {
-    keepers.address =
-      with resource.migadu_mailbox.caixadecorre_io_emerson;
-      "${local_part}@${domain_name}";
-    length = 64;
-  };
-
-  # m@caixadecorre.io -> emerson@caixadecorre.io
-  resource.migadu_identity.caixadecorre_io_m = {
-    depends_on = [ "migadu_mailbox.caixadecorre_io_emerson" ];
-    inherit (resource.migadu_mailbox.caixadecorre_io_emerson) domain_name local_part name;
-    identity = "m";
-    password_use = "none";
-    may_send = true;
-    may_receive = true;
-  };
-
-  # caix@decorre.io -> emerson@caixadecorre.io
-  resource.migadu_identity.caixadecorre_io_caix = {
-    depends_on = [ "migadu_mailbox.caixadecorre_io_emerson" ];
-    inherit (resource.migadu_mailbox.caixadecorre_io_emerson) domain_name local_part name;
-    identity = "caix";
-    password_use = "none";
-    may_send = true;
-    may_receive = true;
-  };
-
-  # *@caixa.decorre.io -> emerson+*@caixadecorre.io
-  resource.migadu_identity.caixadecorre_io_caixa = {
-    depends_on = [ "migadu_mailbox.caixadecorre_io_emerson" ];
-    inherit (resource.migadu_mailbox.caixadecorre_io_emerson) domain_name local_part name;
-    identity = "caixa";
-    password_use = "none";
-    may_send = true;
-    may_receive = true;
-  };
-
-  resource.migadu_alias =
-    with resource.migadu_mailbox.caixadecorre_io_emerson;
-    my.mapToAttrs
-      (local_part: {
-        name = "caixadecorre_io_${local_part}";
-        value = {
-          inherit domain_name local_part;
-          destinations = [
-            (lib.tfRef "migadu_mailbox.caixadecorre_io_emerson.id")
-          ];
-        };
-      })
-      [
-        "abuse"
-        "noc"
-        "security"
-        "postmaster"
-        "webmaster"
-      ];
-
-  resource.migadu_rewrite_rule.caixadecorre_io_plus2inbox_emerson =
-    with resource.migadu_mailbox.caixadecorre_io_emerson; {
-      name = "${local_part}: route messages sent to plus-addresses to the main inbox";
-      inherit domain_name;
-      local_part_rule = "${local_part}+*";
-      destinations = [
-        (lib.tfRef "migadu_mailbox.caixadecorre_io_emerson.id")
-      ];
-      order_num = 1;
-    };
-
 in
 {
   imports = [
-    modules.backend.git
-    modules.providers.cloudflare
-    modules.providers.migadu
+    ../../modules/backend/git.nix
+    ../../modules/providers/cloudflare.nix
   ];
 
-  backend.git.state = "services/migadu/live";
+  backend.git.state = "networking/caixadecorreio";
 
   inherit data resource;
 }

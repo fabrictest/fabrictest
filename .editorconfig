@@ -14,3 +14,7 @@ trim_trailing_whitespace = false
 
 [{*.bash,*.envrc*,*.sh}]
 indent_style = tab
+
+[Makefile]
+indent_style = tab
+tab_width = 8

@@ -1,11 +1,8 @@
 { lib, ... }:
-let
-  modules = import ../mod;
-in
 {
   imports = [
-    modules.backend.git
-    modules.providers.cloudflare
+    ../../modules/backend/git.nix
+    ../../modules/providers/cloudflare.nix
   ];
 
   backend.git.state = "accounts/cloudflare/live";

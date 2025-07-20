@@ -7,7 +7,7 @@
 let
   cfg = config.cloudflare;
 
-  my = import ../lib pkgs;
+  my = import ../../my pkgs;
 in
 {
   options.cloudflare.zones = lib.mkOption {
@@ -35,10 +35,10 @@ in
   ];
 
   config = {
-    data.terraform_remote_state = my.tfRemoteStates [ "acc_cloudflare" ];
+    data.terraform_remote_state = my.tfRemoteStates [ "accounts/cloudflare" ];
 
     resource.cloudflare_zone = lib.mapAttrs (_: zone: {
-      account.id = lib.tfRef "data.terraform_remote_state.acc_cloudflare.outputs.id";
+      account.id = lib.tfRef "data.terraform_remote_state.accounts_cloudflare.outputs.id";
       inherit (zone) name;
       type = "full";
     }) cfg.zones;
