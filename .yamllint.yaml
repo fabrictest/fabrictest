@@ -2,6 +2,6 @@
 extends: default
 rules:
   comments:
-    min-spaces-from-content: 1
+    min-spaces-from-content: 2
   comments-indentation: disable
   line-length: disable
