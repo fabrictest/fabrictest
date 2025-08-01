@@ -2,6 +2,7 @@
   "auto_install_extensions": {
     "git-firefly": true,
     "make": true,
-    "nix": true
+    "nix": true,
+    "terraform": true
   }
 }
