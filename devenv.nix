@@ -3,9 +3,7 @@
   lib,
   ...
 }:
-let
-  l = lib // builtins;
-in
+with lib;
 {
   enterShell = '''';
 
@@ -25,7 +23,7 @@ in
   };
 
   processes.terraform-backend-git = rec {
-    exec = l.getExe pkgs.terraform-backend-git;
+    exec = getExe pkgs.terraform-backend-git;
     process-compose = {
       availability.restart = "on_failure";
       shutdown.command = "${exec} stop";
@@ -104,6 +102,4 @@ in
   delta.enable = true;
 
   difftastic.enable = true;
-
-  dotenv.enable = true;
 }

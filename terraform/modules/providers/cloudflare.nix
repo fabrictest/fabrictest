@@ -2,7 +2,7 @@
 let
   cfg = config.providers.cloudflare;
 
-  var.token = lib.tfRef "var.cloudflare_token";
+  var_token = lib.tfRef "var.cloudflare_token";
 in
 {
   options.providers.cloudflare = lib.mkOption {
@@ -13,7 +13,7 @@ in
         options.token = lib.mkOption {
           description = "Token for accessing the Cloudflare API";
           type = str;
-          default = var.token;
+          default = var_token;
         };
       };
     default = { };
@@ -24,7 +24,7 @@ in
 
     provider.cloudflare.api_token = cfg.token;
 
-    variable.cloudflare_token = lib.mkIf (cfg.token == var.token) {
+    variable.cloudflare_token = lib.mkIf (cfg.token == var_token) {
       description = "Token for accessing the Cloudflare API";
       type = "string";
       sensitive = true;
