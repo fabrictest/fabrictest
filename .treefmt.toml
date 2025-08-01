@@ -55,15 +55,6 @@ priority = -10
 
 # endregion
 
-# region Ruby
-
-[formatter.rubocop]
-includes = ["*Brewfile"]
-command = "rubocop"
-options = ["--auto-correct-all"]
-
-# endregion
-
 # region Shell
 
 [formatter.shfmt]

@@ -58,9 +58,6 @@ in
         pkgs.nixfmt-rfc-style
         pkgs.statix
 
-        # Ruby
-        pkgs.rubocop
-
         # Shell
         pkgs.shfmt
 
