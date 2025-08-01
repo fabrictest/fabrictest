@@ -23,16 +23,6 @@ let
     }
   ) cfg.domains;
 
-  resource.cloudflare_zone_dns_settings = mapAttrs (slug: _: {
-    zone_id = tfRef "cloudflare_zone.${slug}.id";
-    nameservers.type = "cloudflare.standard";
-    zone_mode = "standard";
-    flatten_all_cnames = false;
-    foundation_dns = false;
-    multi_provider = false;
-    secondary_overrides = false;
-  }) resource.cloudflare_zone;
-
   resource.cloudflare_zone_dnssec = mapAttrs (slug: _: {
     zone_id = tfRef "cloudflare_zone.${slug}.id";
     status = "active";
@@ -236,9 +226,13 @@ in
           attrsOf (submodule {
             options.name = mkOption {
               type = str;
+              example = "example.com";
+              description = "TODO TODO TODO TODO TODO";
             };
             options.hosted-email-verify = mkOption {
               type = str;
+              example = "abcdefgh";
+              description = "TODO TODO TODO TODO TODO";
             };
             options.alias = mkOption {
               type = bool;
