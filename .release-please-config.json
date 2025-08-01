@@ -7,9 +7,6 @@
       "version-file": "VERSION"
     }
   },
-  "plugins": [
-    "sentence-case"
-  ],
   "pull-request-title-pattern": "chore: release${component} ${version}",
   "pull-request-header": ":robot: I have created a release *beep* *boop*\n",
   "separate-pull-requests": true
