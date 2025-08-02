@@ -7,16 +7,57 @@
 with lib;
 with lib.types;
 let
+  options.migadu = mkOption {
+    type = submodule {
+      options.domains = mkOption {
+        type = nullOr (
+          attrsOf (submodule {
+            options.verify = mkOption {
+              type = str;
+              example = "abcdefgh";
+              description = "TODO TODO TODO TODO TODO";
+            };
+            options.alias = mkOption {
+              type = bool;
+              description = "TODO TODO TODO TODO TODO";
+              default = false;
+              example = true;
+            };
+            # TODO(eff): Missing check: domain aliases MUST NOT set mailboxes.
+            options.mailboxes = mkOption {
+              type = attrsOf (submodule {
+                options.name = mkOption {
+                  type = str;
+                  description = "TODO TODO TODO TODO TODO";
+                  example = "Bender Bending Rodriguez";
+                };
+                options.admin = mkOption {
+                  type = bool;
+                  description = "Whether this mailbox belongs to an administrator of this service.";
+                  default = false;
+                  example = true;
+                };
+              });
+              default = { };
+            };
+          })
+        );
+        default = { };
+      };
+    };
+  };
+
   cfg = config.migadu;
 
   my = import ../my pkgs;
 
+  asSlug = replaceString "." "_";
+
   data.terraform_remote_state = my.tfRemoteStates [ "accounts/cloudflare" ];
 
-  resource.cloudflare_zone = mapAttrs (
-    _:
-    { name, ... }:
-    {
+  resource.cloudflare_zone = mapAttrs' (
+    name: _:
+    nameValuePair (asSlug name) {
       inherit name;
       account.id = tfRef "data.terraform_remote_state.accounts_cloudflare.outputs.id";
       type = "full";
@@ -29,13 +70,15 @@ let
   }) resource.cloudflare_zone;
 
   dnsRecordsFor =
-    slug:
+    name:
     {
-      name,
-      hosted-email-verify,
+      verify,
       alias,
+      ...
     }:
     let
+      slug = asSlug name;
+
       zone_id = tfRef "cloudflare_zone.${slug}.id";
 
       proto = "_tcp";
@@ -103,7 +146,7 @@ let
         verification = {
           inherit zone_id name;
           type = "TXT";
-          content = ''"hosted-email-verify=${hosted-email-verify}"'';
+          content = ''"hosted-email-verify=${verify}"'';
           ttl = 1;
           comment = "Migadu verification record";
         };
@@ -202,13 +245,8 @@ let
       };
     in
     pipe records [
-      (mapAttrsToList (
-        type:
-        let
-          type_ = if type == "others" then "" else "${type}_";
-        in
-        mapAttrs' (name: nameValuePair "${slug}_${type_}${name}")
-      ))
+      (mapAttrs' (type: nameValuePair (if type == "others" then "" else "${type}_")))
+      (mapAttrsToList (type_: mapAttrs' (name: nameValuePair "${slug}_${type_}${name}")))
       (foldl' mergeAttrs { })
     ];
 
@@ -217,34 +255,81 @@ let
     (foldl' mergeAttrs { })
   ];
 
+  resource.migadu_mailbox = pipe cfg.domains [
+    (mapAttrsToList (
+      domain_name:
+      { mailboxes, ... }:
+      mapAttrs' (
+        local_part:
+        { name, ... }:
+        let
+          slug = asSlug "${domain_name}_${local_part}";
+        in
+        nameValuePair slug {
+          inherit domain_name local_part name;
+          password = tfRef "random_password.${slug}.result";
+        }
+      ) mailboxes
+    ))
+    (lib.foldl' lib.mergeAttrs { })
+  ];
+
+  resource.random_password = mapAttrs (
+    _:
+    { domain_name, local_part, ... }:
+    {
+      keepers = {
+        inherit domain_name local_part;
+      };
+      length = 64;
+    }
+  ) resource.migadu_mailbox;
+
+  resource.migadu_alias =
+    let
+      standardAliases = [
+        "abuse"
+        "noc"
+        "security"
+        "postmaster"
+        "webmaster"
+      ];
+      adminAliases = [ "admin" ];
+      adminAddrs = pipe resource.migadu_mailbox [
+        (filterAttrs (
+          _: { domain_name, local_part, ... }: cfg.domains.${domain_name}.mailboxes.${local_part}.admin
+        ))
+        attrNames
+        (map (slug: tfRef "migadu_mailbox.${slug}.address"))
+      ];
+    in
+    pipe
+      {
+        domain_name = map (getAttr "name") (attrValues resource.cloudflare_zone);
+        local_part = standardAliases ++ adminAliases;
+      }
+      [
+        cartesianProduct
+        (filter ({ local_part, ... }: !elem local_part adminAliases || adminAddrs != [ ]))
+        (my.mapToAttrs (
+          { domain_name, local_part }:
+          {
+            name = asSlug "${domain_name}_${local_part}";
+            value = {
+              inherit domain_name local_part;
+              destinations =
+                if elem local_part adminAliases then
+                  adminAddrs
+                else
+                  map (alias: "${alias}@${domain_name}") adminAliases;
+            };
+          }
+        ))
+      ];
+
 in
 {
-  options.migadu = mkOption {
-    type = submodule {
-      options.domains = mkOption {
-        type = nullOr (
-          attrsOf (submodule {
-            options.name = mkOption {
-              type = str;
-              example = "example.com";
-              description = "TODO TODO TODO TODO TODO";
-            };
-            options.hosted-email-verify = mkOption {
-              type = str;
-              example = "abcdefgh";
-              description = "TODO TODO TODO TODO TODO";
-            };
-            options.alias = mkOption {
-              type = bool;
-              default = false;
-              example = true;
-              description = "TODO TODO TODO TODO TODO";
-            };
-          })
-        );
-      };
-    };
-  };
+  inherit options;
 
   imports = [
     ./providers/cloudflare.nix

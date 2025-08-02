@@ -1,0 +1,16 @@
+#!/bin/sh
+set -eux
+
+CDPATH='' cd -P "$(dirname "$0")"
+
+command -v nix >/dev/null || {
+  printf 'TODO: install Nix\n'
+}
+
+nix profile add nixpkgs#devenv
+
+nix profile add nixpkgs#direnv
+
+test -f .env || cp .env.example .env
+
+direnv allow .

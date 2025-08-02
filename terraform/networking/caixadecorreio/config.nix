@@ -1,4 +1,3 @@
-{ ... }:
 {
   imports = [
     ../../modules/backend/git.nix
@@ -9,15 +8,17 @@
     backend.git.state = "networking/caixadecorreio";
 
     migadu = {
-      domains = {
-        caixadecorre_io = {
-          name = "caixadecorre.io";
-          hosted-email-verify = "tloqjtbj";
-        };
-        decorre_io = {
-          name = "decorre.io";
-          hosted-email-verify = "y07nuop4";
-        };
+      domains."caixadecorre.io" = {
+        verify = "tloqjtbj";
+
+        mailboxes.emerson.admin = true;
+
+        mailboxes.emerson.name = "F. Emerson";
+        mailboxes.flora.name = "Flora Branchi";
+      };
+
+      domains."decorre.io" = {
+        verify = "y07nuop4";
       };
     };
   };

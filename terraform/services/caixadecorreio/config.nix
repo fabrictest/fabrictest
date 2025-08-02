@@ -89,19 +89,9 @@ let
 
   forwardToM = forwardTo "migadu_mailbox.caixadecorre_io_emerson";
   resource.migadu_alias.caixadecorre_io_admin = forwardToM "admin";
-  resource.migadu_alias.caixadecorre_io_abuse = forwardToM "abuse";
-  resource.migadu_alias.caixadecorre_io_noc = forwardToM "noc";
-  resource.migadu_alias.caixadecorre_io_security = forwardToM "security";
-  resource.migadu_alias.caixadecorre_io_postmaster = forwardToM "postmaster";
-  resource.migadu_alias.caixadecorre_io_webmaster = forwardToM "webmaster";
 
   forwardToCaixa = forwardTo "migadu_mailbox.decorre_io_caixa";
   resource.migadu_alias.decorre_io_admin = forwardToCaixa "admin";
-  resource.migadu_alias.decorre_io_abuse = forwardToCaixa "abuse";
-  resource.migadu_alias.decorre_io_noc = forwardToCaixa "noc";
-  resource.migadu_alias.decorre_io_security = forwardToCaixa "security";
-  resource.migadu_alias.decorre_io_postmaster = forwardToCaixa "postmaster";
-  resource.migadu_alias.decorre_io_webmaster = forwardToCaixa "webmaster";
 
   # NOTE(eff): Migadu creates a folder for each plus-address by default. The
   # following rewrite rule disables this feature—all e-mails land into INBOX.
