@@ -2,8 +2,8 @@
 let
   cfg = config.providers.migadu;
 
-  var.username = lib.tfRef "var.migadu_username";
-  var.token = lib.tfRef "var.migadu_token";
+  var_username = lib.tfRef "var.migadu_username";
+  var_token = lib.tfRef "var.migadu_token";
 in
 {
   options.providers.migadu = lib.mkOption {
@@ -14,13 +14,13 @@ in
         options.username = lib.mkOption {
           description = "Username for accessing the Migadu API";
           type = str;
-          default = var.username;
+          default = var_username;
         };
 
         options.token = lib.mkOption {
           description = "Token for accessing the Migadu API";
           type = str;
-          default = var.token;
+          default = var_token;
         };
       };
     default = { };
@@ -29,15 +29,15 @@ in
   config = {
     terraform.required_providers.migadu.source = "metio/migadu";
 
-    provider.migadu = { inherit (cfg) username token; };
+    provider.migadu = cfg;
 
-    variable.migadu_username = lib.mkIf (cfg.username == var.username) {
+    variable.migadu_username = lib.mkIf (cfg.username == var_username) {
       description = "Username for accessing the Migadu API";
       type = "string";
       sensitive = true;
     };
 
-    variable.migadu_token = lib.mkIf (cfg.token == var.token) {
+    variable.migadu_token = lib.mkIf (cfg.token == var_token) {
       description = "Token for accessing the Migadu API";
       type = "string";
       sensitive = true;

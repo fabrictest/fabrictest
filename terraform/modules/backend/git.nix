@@ -29,18 +29,16 @@ in
     default = { };
   };
 
-  config = {
-    terraform.backend.http = rec {
-      address = "http://127.0.0.1:6061/?${
-        lib.concatMapAttrsStringSep "&" (n: v: "${n}=${v}") {
-          type = "git";
-          repository = cfg.repo;
-          ref = cfg.branch;
-          state = "${cfg.state}/terraform.tfstate";
-        }
-      }";
-      lock_address = address;
-      unlock_address = address;
-    };
+  config.terraform.backend.http = rec {
+    address = "http://127.0.0.1:6061/?${
+      lib.concatMapAttrsStringSep "&" (n: v: "${n}=${v}") {
+        type = "git";
+        repository = cfg.repo;
+        ref = cfg.branch;
+        state = "${cfg.state}/terraform.tfstate";
+      }
+    }";
+    lock_address = address;
+    unlock_address = address;
   };
 }
