@@ -4,25 +4,20 @@
     ../../modules/migadu.nix
   ];
 
-  config = {
-    backend.git.state = "networking/caixadecorreio";
+  backend.git.state = "networking/caixadecorreio";
 
-    migadu = {
-      domains."caixadecorre.io" = {
-        verify = "tloqjtbj";
-
-        aliases."ecorre.io".verify = "TODO";
-
-        mailboxes.emerson.admin = true;
-
-        mailboxes.emerson.name = "F. Emerson";
-        mailboxes.flora.name = "Flora Branchi";
+  migadu = {
+    domains."caixadecorre.io" = {
+      verify = "tloqjtbj";
+      aliases."ecorre.io" = {
+        verify = "a8g9xgv4";
       };
+      mailboxes = import ./mailboxes.nix;
+    };
 
-      # TODO(eff): Decommission domain.
-      domains."decorre.io" = {
-        verify = "y07nuop4";
-      };
+    # TODO(eff): Decommission domain.
+    domains."decorre.io" = {
+      verify = "y07nuop4";
     };
   };
 }
