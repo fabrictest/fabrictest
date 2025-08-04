@@ -61,37 +61,23 @@ let
 
   asSlug = replaceString "." "_";
 
-  slugify =
-    domain_name: local_part:
-    pipe
-      [ domain_name local_part ]
-      [
-        (map asSlug)
-        (concatStringsSep "_")
-      ];
+  slugify = domainName: localPart: asSlug "${domainName}_${localPart}";
 
   data.terraform_remote_state = my.tfRemoteStates [ "accounts/cloudflare" ];
 
-  resource.cloudflare_zone = pipe cfg.domains [
-    (
-      domains:
-      pipe domains [
-        attrValues
-        (map (v: attrNames v.aliases))
-        flatten
-        (concat (attrNames domains))
-      ]
-    )
-    (map (
-      name:
-      nameValuePair (asSlug name) {
-        inherit name;
+  resource.cloudflare_zone =
+    let
+      allDomainNames =
+        attrNames cfg.domains ++ flatten (map (v: attrNames v.aliases) (attrValues cfg.domains));
+    in
+    my.mapToAttrs (
+      domainName:
+      nameValuePair (asSlug domainName) {
+        name = domainName;
         account.id = tfRef "data.terraform_remote_state.accounts_cloudflare.outputs.id";
         type = "full";
       }
-    ))
-    listToAttrs
-  ];
+    ) allDomainNames;
 
   resource.cloudflare_zone_dnssec = mapAttrs (slug: _: {
     zone_id = tfRef "cloudflare_zone.${slug}.id";

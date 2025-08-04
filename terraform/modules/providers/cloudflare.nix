@@ -1,21 +1,21 @@
 { config, lib, ... }:
+with lib;
+with lib.types;
 let
   cfg = config.providers.cloudflare;
 
-  var_token = lib.tfRef "var.cloudflare_token";
+  var_token = tfRef "var.cloudflare_token";
 in
 {
-  options.providers.cloudflare = lib.mkOption {
+  options.providers.cloudflare = mkOption {
     description = "Settings for the Cloudflare provider";
-    type =
-      with lib.types;
-      submodule {
-        options.token = lib.mkOption {
-          description = "Token for accessing the Cloudflare API";
-          type = str;
-          default = var_token;
-        };
+    type = submodule {
+      options.token = mkOption {
+        description = "Token for accessing the Cloudflare API";
+        type = str;
+        default = var_token;
       };
+    };
     default = { };
   };
 
@@ -24,7 +24,7 @@ in
 
     provider.cloudflare.api_token = cfg.token;
 
-    variable.cloudflare_token = lib.mkIf (cfg.token == var_token) {
+    variable.cloudflare_token = mkIf (cfg.token == var_token) {
       description = "Token for accessing the Cloudflare API";
       type = "string";
       sensitive = true;
