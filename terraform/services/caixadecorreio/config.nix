@@ -1,11 +1,12 @@
 { lib, pkgs, ... }:
+with lib;
 let
 
   my = import ../../my pkgs;
 
-  mailboxes = lib.pipe ./mailboxes.nix [
+  mailboxes = pipe ./mailboxes.nix [
     import
-    (lib.concat [
+    (concat [
       {
         # caixa@decorre.io - the true admin
         name = "F. Emerson";
@@ -13,30 +14,28 @@ let
         domain_name = "decorre.io";
       }
     ])
-    (lib.map (
-      lib.mergeAttrs {
-        domain_name = "caixadecorre.io";
-        may_access_imap = true;
-        may_access_manage_sieve = true;
-        may_access_pop3 = true;
-        may_send = true;
-        may_receive = true;
-      }
-    ))
+    (map (mergeAttrs {
+      domain_name = "caixadecorre.io";
+      may_access_imap = true;
+      may_access_manage_sieve = true;
+      may_access_pop3 = true;
+      may_send = true;
+      may_receive = true;
+    }))
   ];
 
   resource.migadu_mailbox = my.mapToAttrs (
     { domain_name, local_part, ... }@mailbox:
     let
-      resourceId = "${lib.replaceString "." "_" domain_name}_${local_part}";
+      resourceId = "${replaceString "." "_" domain_name}_${local_part}";
       resource = mailbox // {
-        password = lib.tfRef "random_password.${resourceId}.result";
+        password = tfRef "random_password.${resourceId}.result";
       };
     in
-    lib.nameValuePair resourceId resource
+    nameValuePair resourceId resource
   ) mailboxes;
 
-  resource.random_password = lib.mapAttrs (
+  resource.random_password = mapAttrs (
     _:
     { domain_name, local_part, ... }:
     {
@@ -54,9 +53,9 @@ let
     in
     {
       identity = "m";
-      domain_name = lib.tfRef "${resource}.domain_name";
-      local_part = lib.tfRef "${resource}.local_part";
-      name = lib.tfRef "${resource}.name";
+      domain_name = tfRef "${resource}.domain_name";
+      local_part = tfRef "${resource}.local_part";
+      name = tfRef "${resource}.name";
       password_use = "none";
       may_send = true;
       may_receive = true;
@@ -73,18 +72,18 @@ let
     in
     {
       identity = "caix";
-      domain_name = lib.tfRef "${resource}.domain_name";
-      local_part = lib.tfRef "${resource}.local_part";
-      name = lib.tfRef "${resource}.name";
+      domain_name = tfRef "${resource}.domain_name";
+      local_part = tfRef "${resource}.local_part";
+      name = tfRef "${resource}.name";
       password_use = "none";
       may_send = true;
       may_receive = true;
     };
 
   forwardTo = resource: local_part: {
-    domain_name = lib.tfRef "${resource}.domain_name";
+    domain_name = tfRef "${resource}.domain_name";
     inherit local_part;
-    destinations = [ (lib.tfRef "${resource}.address") ];
+    destinations = [ (tfRef "${resource}.address") ];
   };
 
   forwardToM = forwardTo "migadu_mailbox.caixadecorre_io_emerson";
@@ -98,12 +97,10 @@ let
   plus2inbox =
     order_num: resource:
     let
-      outputRef = output: lib.tfRef "${resource}.${output}";
+      outputRef = output: tfRef "${resource}.${output}";
       domain_name = outputRef "domain_name";
       local_part = outputRef "local_part";
-      identity = outputRef (
-        if lib.hasPrefix "migadu_identity." resource then "identity" else "local_part"
-      );
+      identity = outputRef (if hasPrefix "migadu_identity." resource then "identity" else "local_part");
     in
     {
       name = "${identity}: route messages sent to plus-addresses to the main inbox";

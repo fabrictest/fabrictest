@@ -1,37 +1,37 @@
 { config, lib, ... }:
+with lib;
+with lib.types;
 let
   cfg = config.backend.git;
 in
 {
-  options.backend.git = lib.mkOption {
+  options.backend.git = mkOption {
     description = "Terraform back-end settings";
-    type =
-      with lib.types;
-      submodule {
-        options.repo = lib.mkOption {
-          description = "URL of the Git repository";
-          type = str;
-          default = "git@github.com:fabrictest/terraform.tfstate";
-        };
-
-        options.branch = lib.mkOption {
-          description = "Branch to store the authoritative state";
-          type = str;
-          default = "main";
-        };
-
-        options.state = lib.mkOption {
-          description = "Path to the state directory in the Git repository";
-          type = str;
-        };
+    type = submodule {
+      options.repo = mkOption {
+        description = "URL of the Git repository";
+        type = str;
+        default = "git@github.com:fabrictest/terraform.tfstate";
       };
+
+      options.branch = mkOption {
+        description = "Branch to store the authoritative state";
+        type = str;
+        default = "main";
+      };
+
+      options.state = mkOption {
+        description = "Path to the state directory in the Git repository";
+        type = str;
+      };
+    };
 
     default = { };
   };
 
   config.terraform.backend.http = rec {
     address = "http://127.0.0.1:6061/?${
-      lib.concatMapAttrsStringSep "&" (n: v: "${n}=${v}") {
+      concatMapAttrsStringSep "&" (n: v: "${n}=${v}") {
         type = "git";
         repository = cfg.repo;
         ref = cfg.branch;

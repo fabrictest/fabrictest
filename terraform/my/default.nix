@@ -1,8 +1,9 @@
 { lib, terranix, ... }@pkgs:
+with lib;
 rec {
 
   tfRemoteStates = mapToAttrs (name: {
-    name = lib.replaceString "/" "_" name;
+    name = replaceString "/" "_" name;
     value = tfRemoteState name;
   });
 
@@ -26,5 +27,7 @@ rec {
       terranix_config.imports = modules;
     };
 
-  mapToAttrs = f: l: lib.listToAttrs (lib.map f l);
+  mapToAttrs = f: l: listToAttrs (map f l);
+
+  mapCartesianProductToAttrs = f: l: listToAttrs (mapCartesianProduct f l);
 }

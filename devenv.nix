@@ -102,4 +102,6 @@ with lib;
   delta.enable = true;
 
   difftastic.enable = true;
+
+  dotenv.enable = true;
 }

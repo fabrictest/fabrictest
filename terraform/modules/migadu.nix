@@ -13,27 +13,35 @@ let
         type = nullOr (
           attrsOf (submodule {
             options.verify = mkOption {
+              description = "TODO TODO TODO TODO TODO";
               type = str;
               example = "abcdefgh";
-              description = "TODO TODO TODO TODO TODO";
             };
-            options.alias = mkOption {
-              type = bool;
-              description = "TODO TODO TODO TODO TODO";
-              default = false;
-              example = true;
+            options.aliases = mkOption {
+              type = attrsOf (submodule {
+                options.verify = mkOption {
+                  description = "TODO TODO TODO TODO TODO";
+                  type = str;
+                  example = "abcdefgh";
+                };
+                options.alias = mkOption {
+                  internal = true;
+                  type = bool;
+                  default = true;
+                };
+              });
+              default = { };
             };
-            # TODO(eff): Missing check: domain aliases MUST NOT set mailboxes.
             options.mailboxes = mkOption {
               type = attrsOf (submodule {
                 options.name = mkOption {
-                  type = str;
                   description = "TODO TODO TODO TODO TODO";
+                  type = str;
                   example = "Bender Bending Rodriguez";
                 };
                 options.admin = mkOption {
-                  type = bool;
                   description = "Whether this mailbox belongs to an administrator of this service.";
+                  type = bool;
                   default = false;
                   example = true;
                 };
@@ -53,16 +61,37 @@ let
 
   asSlug = replaceString "." "_";
 
+  slugify =
+    domain_name: local_part:
+    pipe
+      [ domain_name local_part ]
+      [
+        (map asSlug)
+        (concatStringsSep "_")
+      ];
+
   data.terraform_remote_state = my.tfRemoteStates [ "accounts/cloudflare" ];
 
-  resource.cloudflare_zone = mapAttrs' (
-    name: _:
-    nameValuePair (asSlug name) {
-      inherit name;
-      account.id = tfRef "data.terraform_remote_state.accounts_cloudflare.outputs.id";
-      type = "full";
-    }
-  ) cfg.domains;
+  resource.cloudflare_zone = pipe cfg.domains [
+    (
+      domains:
+      pipe domains [
+        attrValues
+        (map (v: attrNames v.aliases))
+        flatten
+        (concat (attrNames domains))
+      ]
+    )
+    (map (
+      name:
+      nameValuePair (asSlug name) {
+        inherit name;
+        account.id = tfRef "data.terraform_remote_state.accounts_cloudflare.outputs.id";
+        type = "full";
+      }
+    ))
+    listToAttrs
+  ];
 
   resource.cloudflare_zone_dnssec = mapAttrs (slug: _: {
     zone_id = tfRef "cloudflare_zone.${slug}.id";
@@ -73,7 +102,7 @@ let
     name:
     {
       verify,
-      alias,
+      alias ? false,
       ...
     }:
     let
@@ -84,12 +113,20 @@ let
       proto = "_tcp";
 
       records.mx =
-        pipe
+        my.mapCartesianProductToAttrs
+          (
+            { record, server }:
+            nameValuePair "${server}_${record.type}" {
+              inherit zone_id;
+              inherit (record) name;
+              comment = "Mail eXchanger host #${server} (${record.type})";
+              content = "aspmx${server}.migadu.com";
+              priority = 10 * (toInt server);
+              ttl = 1;
+              type = "MX";
+            }
+          )
           {
-            server = [
-              "1"
-              "2"
-            ];
             record = [
               {
                 type = "root";
@@ -100,47 +137,33 @@ let
                 name = "*.${name}";
               }
             ];
-          }
-          [
-            cartesianProduct
-            (my.mapToAttrs (
-              { record, server }:
-              nameValuePair "${server}_${record.type}" {
-                inherit zone_id;
-                inherit (record) name;
-                comment = "Mail eXchanger host #${server} (${record.type})";
-                content = "aspmx${server}.migadu.com";
-                priority = 10 * (toInt server);
-                ttl = 1;
-                type = "MX";
-              }
-            ))
-          ];
+            server = [
+              "1"
+              "2"
+            ];
+          };
 
       records.dkim =
-        pipe
+        my.mapCartesianProductToAttrs
+          (
+            { server }:
+            nameValuePair server {
+              inherit zone_id;
+              type = "CNAME";
+              name = "key${server}._domainkey.${name}";
+              content = "key${server}.${name}._domainkey.migadu.com";
+              ttl = 1;
+              proxied = false;
+              comment = "DKIM+ARC key #${server}";
+            }
+          )
           {
             server = [
               "1"
               "2"
               "3"
             ];
-          }
-          [
-            cartesianProduct
-            (my.mapToAttrs (
-              { server }:
-              nameValuePair server {
-                inherit zone_id;
-                type = "CNAME";
-                name = "key${server}._domainkey.${name}";
-                content = "key${server}.${name}._domainkey.migadu.com";
-                ttl = 1;
-                proxied = false;
-                comment = "DKIM+ARC key #${server}";
-              }
-            ))
-          ];
+          };
 
       records.others = {
         verification = {
@@ -251,6 +274,7 @@ let
     ];
 
   resource.cloudflare_dns_record = pipe cfg.domains [
+    (d: d // (foldl' mergeAttrs { } (map (v: v.aliases) (attrValues d))))
     (mapAttrsToList dnsRecordsFor)
     (foldl' mergeAttrs { })
   ];
@@ -263,7 +287,7 @@ let
         local_part:
         { name, ... }:
         let
-          slug = asSlug "${domain_name}_${local_part}";
+          slug = slugify domain_name local_part;
         in
         nameValuePair slug {
           inherit domain_name local_part name;
@@ -295,31 +319,36 @@ let
         "webmaster"
       ];
       adminAliases = [ "admin" ];
-      adminAddrs = pipe resource.migadu_mailbox [
-        (filterAttrs (
-          _: { domain_name, local_part, ... }: cfg.domains.${domain_name}.mailboxes.${local_part}.admin
-        ))
-        attrNames
-        (map (slug: tfRef "migadu_mailbox.${slug}.address"))
-      ];
+      adminAddrs = mapAttrs (
+        domain_name:
+        { mailboxes, ... }:
+        pipe mailboxes [
+          (filterAttrs (_: getAttr "admin"))
+          (mapAttrsToList (local_part: _: "${local_part}@${domain_name}"))
+        ]
+      ) cfg.domains;
     in
     pipe
       {
-        domain_name = map (getAttr "name") (attrValues resource.cloudflare_zone);
+        domain_name = attrNames cfg.domains;
         local_part = standardAliases ++ adminAliases;
       }
       [
         cartesianProduct
-        (filter ({ local_part, ... }: !elem local_part adminAliases || adminAddrs != [ ]))
+        (filter (
+          { local_part, domain_name }:
+          !elem local_part adminAliases
+          || (hasAttr domain_name adminAddrs && adminAddrs.${domain_name} != [ ])
+        ))
         (my.mapToAttrs (
           { domain_name, local_part }:
           {
-            name = asSlug "${domain_name}_${local_part}";
+            name = slugify domain_name local_part;
             value = {
               inherit domain_name local_part;
               destinations =
                 if elem local_part adminAliases then
-                  adminAddrs
+                  adminAddrs.${domain_name}
                 else
                   map (alias: "${alias}@${domain_name}") adminAliases;
             };

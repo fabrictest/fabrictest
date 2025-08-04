@@ -1,4 +1,5 @@
 { lib, ... }:
+with lib;
 {
   imports = [
     ../../modules/backend/git.nix
@@ -18,6 +19,6 @@
 
   output.id = {
     description = "ID of the account";
-    value = lib.tfRef "cloudflare_account.fabrictest.id";
+    value = tfRef "cloudflare_account.fabrictest.id";
   };
 }
