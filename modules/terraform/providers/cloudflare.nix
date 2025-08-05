@@ -19,15 +19,13 @@ in
     default = { };
   };
 
-  config = {
-    terraform.required_providers.cloudflare.source = "cloudflare/cloudflare";
+  config.terraform.required_providers.cloudflare.source = "cloudflare/cloudflare";
 
-    provider.cloudflare.api_token = cfg.token;
+  config.provider.cloudflare.api_token = cfg.token;
 
-    variable.cloudflare_token = mkIf (cfg.token == var_token) {
-      description = "Token for accessing the Cloudflare API";
-      type = "string";
-      sensitive = true;
-    };
+  config.variable.cloudflare_token = mkIf (cfg.token == var_token) {
+    description = "Token for accessing the Cloudflare API";
+    type = "string";
+    sensitive = true;
   };
 }

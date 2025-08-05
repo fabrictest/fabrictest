@@ -1,7 +1,7 @@
 {
   imports = [
-    ../modules/backend/git.nix
-    ../modules/cloudflare.nix
+    ../../../modules/terraform/backend/git.nix
+    ../../../modules/terraform/cloudflare.nix
   ];
 
   backend.git.state = "network/live";

@@ -57,11 +57,13 @@ let
 
   cfg = config.migadu;
 
-  my = import ../my pkgs;
+  my = import ../../my pkgs;
 
   asSlug = replaceString "." "_";
 
   slugify = domainName: localPart: asSlug "${domainName}_${localPart}";
+
+  emailify = domainName: localPart: "${localPart}@${domainName}";
 
   data.terraform_remote_state = my.tfRemoteStates [ "accounts/cloudflare" ];
 
@@ -71,9 +73,9 @@ let
         attrNames cfg.domains ++ flatten (map (v: attrNames v.aliases) (attrValues cfg.domains));
     in
     my.mapToAttrs (
-      domainName:
-      nameValuePair (asSlug domainName) {
-        name = domainName;
+      name:
+      nameValuePair (asSlug name) {
+        inherit name;
         account.id = tfRef "data.terraform_remote_state.accounts_cloudflare.outputs.id";
         type = "full";
       }
@@ -260,13 +262,13 @@ let
     ];
 
   resource.cloudflare_dns_record = pipe cfg.domains [
-    (d: d // (foldl' mergeAttrs { } (map (v: v.aliases) (attrValues d))))
+    (d: d // (foldl' mergeAttrs { } (map (getAttr "aliases") (attrValues d))))
     (mapAttrsToList dnsRecordsFor)
     (foldl' mergeAttrs { })
   ];
 
-  resource.migadu_mailbox = pipe cfg.domains [
-    (mapAttrsToList (
+  resource.migadu_mailbox = foldl' mergeAttrs { } (
+    mapAttrsToList (
       domain_name:
       { mailboxes, ... }:
       mapAttrs' (
@@ -278,11 +280,15 @@ let
         nameValuePair slug {
           inherit domain_name local_part name;
           password = tfRef "random_password.${slug}.result";
+          may_access_imap = true;
+          may_access_manage_sieve = true;
+          may_access_pop3 = true;
+          may_send = true;
+          may_receive = true;
         }
       ) mailboxes
-    ))
-    (lib.foldl' lib.mergeAttrs { })
-  ];
+    ) cfg.domains
+  );
 
   resource.random_password = mapAttrs (
     _:
@@ -306,11 +312,11 @@ let
       ];
       adminAliases = [ "admin" ];
       adminAddrs = mapAttrs (
-        domain_name:
+        domainName:
         { mailboxes, ... }:
         pipe mailboxes [
           (filterAttrs (_: getAttr "admin"))
-          (mapAttrsToList (local_part: _: "${local_part}@${domain_name}"))
+          (mapAttrsToList (localPart: _: emailify domainName localPart))
         ]
       ) cfg.domains;
     in
@@ -336,7 +342,7 @@ let
                 if elem local_part adminAliases then
                   adminAddrs.${domain_name}
                 else
-                  map (alias: "${alias}@${domain_name}") adminAliases;
+                  map (emailify domain_name) adminAliases;
             };
           }
         ))

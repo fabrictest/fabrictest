@@ -1,8 +1,10 @@
 .POSIX:
 .SUFFIXES:
 
-plan apply: config.tf.json FORCE
-	tofu init
+plan apply: init FORCE
+	tofu $@
+
+init: config.tf.json FORCE
 	tofu $@
 
 config.tf.json: config.nix

@@ -2,8 +2,8 @@
 with lib;
 {
   imports = [
-    ../../modules/backend/git.nix
-    ../../modules/providers/cloudflare.nix
+    ../../../modules/terraform/backend/git.nix
+    ../../../modules/terraform/providers/cloudflare.nix
   ];
 
   backend.git.state = "accounts/cloudflare/live";

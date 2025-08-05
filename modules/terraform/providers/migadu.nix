@@ -26,21 +26,19 @@ in
     default = { };
   };
 
-  config = {
-    terraform.required_providers.migadu.source = "metio/migadu";
+  config.terraform.required_providers.migadu.source = "metio/migadu";
 
-    provider.migadu = cfg;
+  config.provider.migadu = cfg;
 
-    variable.migadu_username = mkIf (cfg.username == var_username) {
-      description = "Username for accessing the Migadu API";
-      type = "string";
-      sensitive = true;
-    };
+  config.variable.migadu_username = mkIf (cfg.username == var_username) {
+    description = "Username for accessing the Migadu API";
+    type = "string";
+    sensitive = true;
+  };
 
-    variable.migadu_token = mkIf (cfg.token == var_token) {
-      description = "Token for accessing the Migadu API";
-      type = "string";
-      sensitive = true;
-    };
+  config.variable.migadu_token = mkIf (cfg.token == var_token) {
+    description = "Token for accessing the Migadu API";
+    type = "string";
+    sensitive = true;
   };
 }

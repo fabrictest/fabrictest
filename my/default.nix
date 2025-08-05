@@ -10,7 +10,7 @@ rec {
   tfRemoteState =
     name:
     tfRemoteStateWith {
-      modules = [ ../${name}/config.nix ];
+      modules = [ ../infrastructure/${name}/config.nix ];
     };
 
   tfRemoteStateWith =
