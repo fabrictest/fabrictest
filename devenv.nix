@@ -95,5 +95,6 @@ with lib;
 
   difftastic.enable = true;
 
+  # FIXME(eff): Doesn't seem to work with flakes anymore.
   dotenv.enable = true;
 }

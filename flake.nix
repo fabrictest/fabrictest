@@ -38,7 +38,7 @@
       systems = nixpkgs.lib.systems.flakeExposed;
 
       perSystem =
-        { config, system, ... }:
+        { system, ... }:
         {
           _module.args.pkgs = import nixpkgs {
             inherit system;
