@@ -4,7 +4,7 @@
 
 1. `nix profile install nixpkgs#direnv`
 
-1. \`git clone ... fabrictest
+1. `git clone ... fabrictest`
 
 1. `cd fabrictest`
 

@@ -7,20 +7,18 @@ with lib;
 {
   enterShell = '''';
 
-  packages = [
-    pkgs.git
-    pkgs.terranix
+  packages = with pkgs; [
+    git
+    terranix
 
     # Zed
-    pkgs.nil
-    pkgs.nixd
+    nil
+    nixd
   ];
 
   #tasks
 
-  languages.terraform = {
-    enable = true;
-  };
+  languages.terraform.enable = true;
 
   processes.terraform-backend-git = rec {
     exec = getExe pkgs.terraform-backend-git;
@@ -40,47 +38,41 @@ with lib;
   git-hooks = {
     hooks.treefmt = {
       enable = true;
-      settings.formatters = [
+      settings.formatters = with pkgs; [
         # *
-        pkgs.keep-sorted
+        keep-sorted
 
         # JSON
-        pkgs.jsonfmt
+        jsonfmt
 
         # Markdown
-        pkgs.mdformat
-        pkgs.mdsh
+        mdformat
+        mdsh
 
         # Nix
-        pkgs.deadnix
-        pkgs.nixfmt-rfc-style
-        pkgs.statix
+        deadnix
+        nixfmt-rfc-style
+        statix
 
         # Shell
-        pkgs.shfmt
+        shfmt
 
         # TOML
-        pkgs.taplo
+        taplo
 
         # YAML
-        pkgs.yamlfmt
-        pkgs.yamllint
+        yamlfmt
+        yamllint
       ];
     };
 
     # TODO(eff): Should we add linters to treefmt as well?
 
-    hooks.actionlint = {
-      enable = true;
-    };
+    hooks.actionlint.enable = true;
 
-    hooks.editorconfig-checker = {
-      enable = true;
-    };
+    hooks.editorconfig-checker.enable = true;
 
-    hooks.shellcheck = {
-      enable = true;
-    };
+    hooks.shellcheck.enable = true;
 
     # TODO(eff): Add a new hook for zizmor.
   };
