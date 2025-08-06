@@ -20,3 +20,6 @@ terraform.tfstate*
 
 # terranix
 config.tf.json*
+
+# Miscellaneous
+/scratch
