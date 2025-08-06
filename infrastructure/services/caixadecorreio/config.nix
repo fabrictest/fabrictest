@@ -23,8 +23,8 @@ let
 in
 {
   imports = [
-    ../../../modules/terraform/backend/git.nix
-    ../../../modules/terraform/migadu.nix
+    ../../../modules/terranix/backend/git.nix
+    ../../../modules/terranix/migadu.nix
   ];
 
   backend.git.state = "networking/caixadecorreio";

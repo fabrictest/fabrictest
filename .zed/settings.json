@@ -3,6 +3,7 @@
     "git-firefly": true,
     "make": true,
     "nix": true,
-    "terraform": true
+    "terraform": true,
+    "toml": true
   }
 }

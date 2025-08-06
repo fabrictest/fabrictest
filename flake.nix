@@ -24,18 +24,23 @@
   };
 
   outputs =
-    inputs:
-    inputs.flake-parts.lib.mkFlake { inherit inputs; } {
+    inputs@{
+      devenv,
+      flake-parts,
+      nixpkgs,
+      ...
+    }:
+    flake-parts.lib.mkFlake { inherit inputs; } {
       imports = [
-        inputs.devenv.flakeModules.default
+        devenv.flakeModules.default
       ];
 
-      systems = inputs.nixpkgs.lib.systems.flakeExposed;
+      systems = nixpkgs.lib.systems.flakeExposed;
 
       perSystem =
         { config, system, ... }:
         {
-          _module.args.pkgs = import inputs.nixpkgs {
+          _module.args.pkgs = import nixpkgs {
             inherit system;
             config.allowUnfree = true;
           };
