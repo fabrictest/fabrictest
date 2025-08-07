@@ -12,7 +12,7 @@
   };
 
   inputs.clan-core = {
-    url = "https://git.clan.lol/clan/clan-core/archive/main.tar.gz";
+    url = "github:clan-lol/clan-core";
     inputs.flake-parts.follows = "flake-parts";
     inputs.nixpkgs.follows = "nixpkgs";
     inputs.systems.follows = "systems";
@@ -21,10 +21,12 @@
   inputs.devenv = {
     url = "github:cachix/devenv";
     inputs.nixpkgs.follows = "nixpkgs";
+    # FIXME(eff): This construct is broken. https://github.com/DeterminateSystems/nix-src/issues/95
     # inputs.git-hooks.inputs.flake-parts.follows = "flake-parts";
   };
 
   inputs.devenv-root = {
+    # NOTE(eff): url is overridden in .envrc.
     url = "file+file:///dev/null";
     flake = false;
   };
@@ -59,7 +61,44 @@
 
       systems = import inputs.systems;
 
-      clan.meta.name = "fabrictest";
+      clan.meta = {
+        name = "fabrictest";
+        description = "tautologicc's homelab";
+      };
+
+      clan.inventory = {
+        machines.snaz = {
+          tags = [ ];
+        };
+
+        instances.admin = {
+          roles.default.tags.all = { };
+          # TODO(eff): Rotate SSH key.
+          roles.default.settings.allowedUsers.tautologicc =
+            "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEI496sUFzVECzwdbjWFPwEyGp8tA6OuXKS3qedUXRnF";
+        };
+
+        instances.snaz-user = {
+          module.name = "users";
+          roles.default.tags.all = { };
+          roles.default.settings = {
+            user = "tautologicc";
+            group = [
+              "wheel"
+              "networkmanager"
+              "video"
+              "input"
+            ];
+          };
+        };
+
+        instances.zerotier = {
+          roles.controller.machines.snaz = { };
+          roles.peer.tags.all = { };
+        };
+      };
+
+      clan.machines = { };
 
       perSystem =
         {
@@ -78,9 +117,13 @@
           devenv.shells.default = {
             inherit (clan.meta) name;
 
-            enterShell = '''';
+            enterShell = ''
+              echo TODO
+            '';
 
-            enterTest = '''';
+            enterTest = ''
+              echo TODO
+            '';
 
             overlays = [ ];
 
@@ -94,6 +137,9 @@
                 p.random
               ]))
               terranix
+
+              # XXX(eff): Can we have clan-cli-full without all its dep baggage?
+              clan-core.packages.${system}.clan-cli
 
               # Zed
               nil
