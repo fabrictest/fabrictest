@@ -21,6 +21,7 @@
   inputs.devenv = {
     url = "github:cachix/devenv";
     inputs.nixpkgs.follows = "nixpkgs";
+    # inputs.git-hooks.inputs.flake-parts.follows = "flake-parts";
   };
 
   inputs.devenv-root = {
@@ -30,6 +31,7 @@
 
   inputs.flake-parts = {
     url = "github:hercules-ci/flake-parts";
+    inputs.nixpkgs-lib.follows = "nixpkgs";
   };
 
   inputs.nixpkgs = {
@@ -57,9 +59,7 @@
 
       systems = import inputs.systems;
 
-      clan = {
-        meta.name = "fabrictest";
-      };
+      clan.meta.name = "fabrictest";
 
       perSystem =
         {

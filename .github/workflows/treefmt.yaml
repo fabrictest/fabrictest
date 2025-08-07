@@ -62,7 +62,8 @@ jobs:
         uses: IAreKyleW00t/verified-bot-commit@cc09d455be3e20eb6b1c3d1c30a5221f9475aa10 # v1.5.1
         with:
           files: ${{ steps.diff.outputs.files }}
-          message: "style: format changes"
+          message: |
+            style: format changes
           ref: ${{ github.event.pull_request.head.ref }}
           token: ${{ steps.app-token.outputs.token }}
           update-local: false
