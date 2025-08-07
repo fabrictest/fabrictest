@@ -1,5 +1,5 @@
 {
-  description = "fabricte.st - eff's homelab";
+  description = "Fabric Test - tautologicc's homelab";
 
   nixConfig = {
     # TODO(eff): Add fabrictest cache.
@@ -13,18 +13,14 @@
 
   inputs.clan-core = {
     url = "https://git.clan.lol/clan/clan-core/archive/main.tar.gz";
-    inputs = {
-      flake-parts.follows = "flake-parts";
-      nixpkgs.follows = "nixpkgs";
-      systems.follows = "systems";
-    };
+    inputs.flake-parts.follows = "flake-parts";
+    inputs.nixpkgs.follows = "nixpkgs";
+    inputs.systems.follows = "systems";
   };
 
   inputs.devenv = {
     url = "github:cachix/devenv";
-    inputs = {
-      nixpkgs.follows = "nixpkgs";
-    };
+    inputs.nixpkgs.follows = "nixpkgs";
   };
 
   inputs.devenv-root = {
@@ -84,8 +80,19 @@
 
             enterShell = '''';
 
+            enterTest = '''';
+
+            overlays = [ ];
+
+            # TODO(eff): Extract terranix module.
+
             packages = with pkgs; [
               git
+              (opentofu.withPlugins (p: [
+                p.cloudflare
+                p.migadu
+                p.random
+              ]))
               terranix
 
               # Zed
@@ -94,15 +101,6 @@
             ];
 
             #tasks
-
-            languages.terraform = {
-              enable = true;
-              package = pkgs.opentofu.withPlugins (p: [
-                p.cloudflare
-                p.migadu
-                p.random
-              ]);
-            };
 
             processes.terraform-backend-git = rec {
               exec = getExe pkgs.terraform-backend-git;
@@ -165,18 +163,11 @@
 
             # TODO(eff): Add a new hook for zizmor.
 
-            enterTest = '''';
-
-            # overlays = [ ];
-
             apple.sdk = null;
 
             delta.enable = true;
 
             difftastic.enable = true;
-
-            # FIXME(eff): Doesn't seem to work with flakes anymore.
-            dotenv.enable = true;
           };
         };
 
