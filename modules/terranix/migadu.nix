@@ -7,54 +7,6 @@
 with lib;
 with lib.types;
 let
-  options.migadu = mkOption {
-    type = submodule {
-      options.domains = mkOption {
-        type = nullOr (
-          attrsOf (submodule {
-            options.verify = mkOption {
-              description = "TODO TODO TODO TODO TODO";
-              type = str;
-              example = "abcdefgh";
-            };
-            options.aliases = mkOption {
-              type = attrsOf (submodule {
-                options.verify = mkOption {
-                  description = "TODO TODO TODO TODO TODO";
-                  type = str;
-                  example = "abcdefgh";
-                };
-                options.alias = mkOption {
-                  internal = true;
-                  type = bool;
-                  default = true;
-                };
-              });
-              default = { };
-            };
-            options.mailboxes = mkOption {
-              type = attrsOf (submodule {
-                options.name = mkOption {
-                  description = "TODO TODO TODO TODO TODO";
-                  type = str;
-                  example = "Bender Bending Rodriguez";
-                };
-                options.admin = mkOption {
-                  description = "Whether this mailbox belongs to an administrator of this service.";
-                  type = bool;
-                  default = false;
-                  example = true;
-                };
-              });
-              default = { };
-            };
-          })
-        );
-        default = { };
-      };
-    };
-  };
-
   cfg = config.migadu;
 
   my = import ../../my pkgs;
@@ -65,8 +17,6 @@ let
 
   emailify = domainName: localPart: "${localPart}@${domainName}";
 
-  data.terraform_remote_state = my.tfRemoteStates [ "accounts/cloudflare" ];
-
   resource.cloudflare_zone =
     let
       allDomainNames =
@@ -75,8 +25,10 @@ let
     my.mapToAttrs (
       name:
       nameValuePair (asSlug name) {
+        account = {
+          id = tfRef "data.terraform_remote_state.accounts_cloudflare.outputs.id";
+        };
         inherit name;
-        account.id = tfRef "data.terraform_remote_state.accounts_cloudflare.outputs.id";
         type = "full";
       }
     ) allDomainNames;
@@ -261,16 +213,26 @@ let
       (foldl' mergeAttrs { })
     ];
 
-  resource.cloudflare_dns_record = pipe cfg.domains [
-    (d: d // (foldl' mergeAttrs { } (map (getAttr "aliases") (attrValues d))))
+  resource.cloudflare_dns_record = pipe cfg [
+    (getAttr "domains")
+    (
+      d:
+      pipe d [
+        attrValues
+        (map (getAttr "aliases"))
+        (foldl' mergeAttrs { })
+        (mergeAttrs d)
+      ]
+    )
     (mapAttrsToList dnsRecordsFor)
     (foldl' mergeAttrs { })
   ];
 
-  resource.migadu_mailbox = foldl' mergeAttrs { } (
-    mapAttrsToList (
+  resource.migadu_mailbox = pipe cfg [
+    (getAttr "domains")
+    (mapAttrs (_: getAttr "mailboxes"))
+    (mapAttrsToList (
       domain_name:
-      { mailboxes, ... }:
       mapAttrs' (
         local_part:
         { name, ... }:
@@ -286,9 +248,10 @@ let
           may_send = true;
           may_receive = true;
         }
-      ) mailboxes
-    ) cfg.domains
-  );
+      )
+    ))
+    (foldl' mergeAttrs { })
+  ];
 
   resource.random_password = mapAttrs (
     _:
@@ -311,14 +274,18 @@ let
         "webmaster"
       ];
       adminAliases = [ "admin" ];
-      adminAddrs = mapAttrs (
-        domainName:
-        { mailboxes, ... }:
-        pipe mailboxes [
-          (filterAttrs (_: getAttr "admin"))
-          (mapAttrsToList (localPart: _: emailify domainName localPart))
-        ]
-      ) cfg.domains;
+      adminAddrs = pipe cfg [
+        (getAttr "domains")
+        (mapAttrs (_: getAttr "mailboxes"))
+        (mapAttrs (
+          domainName: mailboxes:
+          pipe mailboxes [
+            (filterAttrs (_: getAttr "admin"))
+            attrNames
+            (map (emailify domainName))
+          ]
+        ))
+      ];
     in
     pipe
       {
@@ -333,11 +300,10 @@ let
           || (hasAttr domain_name adminAddrs && adminAddrs.${domain_name} != [ ])
         ))
         (my.mapToAttrs (
-          { domain_name, local_part }:
+          { domain_name, local_part }@value:
           {
             name = slugify domain_name local_part;
-            value = {
-              inherit domain_name local_part;
+            value = value // {
               destinations =
                 if elem local_part adminAliases then
                   adminAddrs.${domain_name}
@@ -350,7 +316,64 @@ let
 
 in
 {
-  inherit options;
+  options = {
+    migadu = mkOption {
+      type = submodule {
+        options = {
+          domains = mkOption {
+            type = nullOr (
+              attrsOf (submodule {
+                options = {
+                  verify = mkOption {
+                    description = "TODO TODO TODO TODO TODO";
+                    type = str;
+                    example = "abcdefgh";
+                  };
+                  aliases = mkOption {
+                    type = attrsOf (submodule {
+                      options = {
+                        verify = mkOption {
+                          description = "TODO TODO TODO TODO TODO";
+                          type = str;
+                          example = "abcdefgh";
+                        };
+                        alias = mkOption {
+                          type = bool;
+                          default = true;
+                          internal = true;
+                          visible = false;
+                        };
+                      };
+                    });
+                    default = { };
+                  };
+                  mailboxes = mkOption {
+                    type = attrsOf (submodule {
+                      options = {
+                        name = mkOption {
+                          description = "TODO TODO TODO TODO TODO";
+                          type = str;
+                          example = "Bender Bending Rodriguez";
+                        };
+                        admin = mkOption {
+                          description = "Whether this mailbox belongs to an administrator of this service.";
+                          type = bool;
+                          default = false;
+                          example = true;
+                        };
+                      };
+                    });
+                    default = { };
+                  };
+                };
+              })
+            );
+            default = { };
+          };
+        };
+      };
+    };
+  };
 
   imports = [
     ./providers/cloudflare.nix
@@ -358,6 +381,10 @@ in
   ];
 
   config = {
-    inherit data resource;
+    data = {
+      terraform_remote_state = my.tfRemoteStates [ "accounts/cloudflare" ];
+    };
+
+    inherit resource;
   };
 }

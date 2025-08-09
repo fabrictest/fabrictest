@@ -24,7 +24,9 @@ rec {
     { modules }:
     import (terranix + /core) {
       inherit pkgs;
-      terranix_config.imports = modules;
+      terranix_config = {
+        imports = modules;
+      };
     };
 
   mapToAttrs = f: l: listToAttrs (map f l);

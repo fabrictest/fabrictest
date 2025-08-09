@@ -1,5 +1,13 @@
 {
-  terraform.required_providers.random.source = "hashicorp/random";
+  terraform = {
+    required_providers = {
+      random = {
+        source = "hashicorp/random";
+      };
+    };
+  };
 
-  provider.random = { };
+  provider = {
+    random = { };
+  };
 }
