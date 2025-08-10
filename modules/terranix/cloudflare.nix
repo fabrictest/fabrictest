@@ -88,7 +88,7 @@ in
           };
         }
       ))
-      (foldl' mergeAttrs { })
+      mergeAttrsList
     ];
   };
 

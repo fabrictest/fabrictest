@@ -19,8 +19,14 @@ let
 
   resource.cloudflare_zone =
     let
-      allDomainNames =
-        attrNames cfg.domains ++ flatten (map (v: attrNames v.aliases) (attrValues cfg.domains));
+      inherit (cfg) domains;
+      allDomainNames = pipe domains [
+        attrValues
+        (map (getAttr "aliases"))
+        (map attrNames)
+        flatten
+        (concat domains)
+      ];
     in
     my.mapToAttrs (
       name:
@@ -210,7 +216,7 @@ let
     pipe records [
       (mapAttrs' (type: nameValuePair (if type == "others" then "" else "${type}_")))
       (mapAttrsToList (type_: mapAttrs' (name: nameValuePair "${slug}_${type_}${name}")))
-      (foldl' mergeAttrs { })
+      mergeAttrsList
     ];
 
   resource.cloudflare_dns_record = pipe cfg [
@@ -220,12 +226,12 @@ let
       pipe d [
         attrValues
         (map (getAttr "aliases"))
-        (foldl' mergeAttrs { })
-        (mergeAttrs d)
+        (concat [ d ])
+        mergeAttrsList
       ]
     )
     (mapAttrsToList dnsRecordsFor)
-    (foldl' mergeAttrs { })
+    mergeAttrsList
   ];
 
   resource.migadu_mailbox = pipe cfg [
@@ -250,7 +256,7 @@ let
         }
       )
     ))
-    (foldl' mergeAttrs { })
+    mergeAttrsList
   ];
 
   resource.random_password = mapAttrs (

@@ -9,8 +9,16 @@ in
     backend = {
       git = mkOption {
         description = "Terraform back-end settings";
+
         type = submodule {
           options = {
+            type = mkOption {
+              type = "str";
+              default = "git";
+              internal = true;
+              visible = false;
+            };
+
             repository = mkOption {
               description = "URL of the Git repository";
               type = str;
@@ -26,6 +34,7 @@ in
             state = mkOption {
               description = "Path to the state directory in the Git repository";
               type = str;
+              apply = p: p ++ "/terraform.tfstate";
             };
           };
         };
@@ -39,13 +48,7 @@ in
     terraform = {
       backend = {
         http = rec {
-          address = "http://127.0.0.1:6061/?${
-            concatMapAttrsStringSep "&" (n: v: "${n}=${v}") {
-              type = "git";
-              inherit (cfg) repository ref;
-              state = "${cfg.state}/terraform.tfstate";
-            }
-          }";
+          address = "http://127.0.0.1:6061/?${concatMapAttrsStringSep "&" (n: v: "${n}=${v}") cfg}";
           lock_address = address;
           unlock_address = address;
         };

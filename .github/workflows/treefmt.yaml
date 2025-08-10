@@ -46,9 +46,9 @@ jobs:
         id: diff
         run: |
           {
-            echo files'<<'FILES
+            printf %s\\n files'<<'FILES
             git diff --name-only
-            echo FILES
+            printf %s\\n FILES
           } >>"$GITHUB_OUTPUT"
       - name: Generate app token
         if: ${{ steps.diff.outputs.files }}

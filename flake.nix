@@ -1,13 +1,17 @@
 {
-  description = "F.'s homelab";
+  description = "Fabric Test — F.'s homelab";
 
   nixConfig = {
     # TODO(eff): Add fabrictest cache.
     extra-substituters = [
+      "https://cache.clan.lol"
       "https://devenv.cachix.org"
+      "https://nix-community.cachix.org"
     ];
     extra-trusted-public-keys = [
+      "cache.clan.lol-1:3KztgSAB5R1M+Dz7vzkBGzXdodizbgLXGXKXlcQLA28="
       "devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw="
+      "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
     ];
   };
 
@@ -89,6 +93,7 @@
         inventory = {
           machines = {
             snaz = {
+              # TODO(eff): Define tags.
               tags = [ ];
             };
           };
@@ -100,11 +105,9 @@
                   tags = {
                     all = { };
                   };
-                  # TODO(eff): Rotate SSH key.
                   settings = {
-                    allowedUsers = rec {
-                      tautologicc = eff;
-                      eff = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEI496sUFzVECzwdbjWFPwEyGp8tA6OuXKS3qedUXRnF";
+                    allowedUsers = {
+                      eff = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIONucbKwW3mhpLJmWpl2Z9oEH13jldnCeopjwn4u4koV";
                     };
                   };
                 };
@@ -113,13 +116,16 @@
 
             snaz-user = {
               module = {
+                input = "clan-core";
                 name = "users";
               };
+
               roles = {
                 default = {
                   tags = {
                     all = { };
                   };
+
                   settings = {
                     user = "eff";
                     group = [
@@ -129,6 +135,10 @@
                       "input"
                     ];
                   };
+
+                  extraModules = [
+                    ./users/eff/home.nix
+                  ];
                 };
               };
             };
@@ -144,22 +154,6 @@
                   tags = {
                     all = { };
                   };
-                };
-              };
-            };
-          };
-        };
-
-        machines = {
-          snaz = {
-            nixpkgs = {
-              hostPlatform = "x86_64-linux";
-            };
-
-            clan = {
-              core = {
-                networking = {
-                  targetHost = "root@snaz";
                 };
               };
             };
