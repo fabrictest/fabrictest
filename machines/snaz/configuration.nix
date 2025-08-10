@@ -1,5 +1,4 @@
-{ ... }:
-{
+_: {
   clan = {
     core = {
       networking = {
