@@ -1,8 +1,8 @@
-_: {
+{
   clan = {
     core = {
       networking = {
-        targetHost = "root@snaz";
+        # targetHost = "root@snaz";
       };
     };
   };
@@ -16,12 +16,16 @@ _: {
               # TODO(eff): Decommission SSH key once we get into Bitwarden.
               "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEI496sUFzVECzwdbjWFPwEyGp8tA6OuXKS3qedUXRnF" # tautologicc@illusions
 
-              "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIONucbKwW3mhpLJmWpl2Z9oEH13jldnCeopjwn4u4koV"
+              "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIONucbKwW3mhpLJmWpl2Z9oEH13jldnCeopjwn4u4koV" # eff@snaz
             ];
           };
         };
       };
     };
+  };
+
+  nixpkgs = {
+    hostPlatform = "x86_64-linux";
   };
 
   services = {

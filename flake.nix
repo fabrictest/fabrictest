@@ -106,7 +106,7 @@
                     all = { };
                   };
                   settings = {
-                    allowedUsers = {
+                    allowedKeys = {
                       eff = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIONucbKwW3mhpLJmWpl2Z9oEH13jldnCeopjwn4u4koV";
                     };
                   };
@@ -128,7 +128,7 @@
 
                   settings = {
                     user = "eff";
-                    group = [
+                    groups = [
                       "wheel"
                       "networkmanager"
                       "video"
