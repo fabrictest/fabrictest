@@ -30,16 +30,14 @@ jobs:
       contents: read
       security-events: write
     steps:
-      - name: Install zizmor
-        run: |
-          pipx run --quiet -- zizmor --version
       - name: Check out repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           persist-credentials: false
       - name: Lint Github actions and workflows
         run: |
-          pipx run --quiet -- zizmor --verbose --format=sarif --gh-hostname="${GITHUB_SERVER_URL#*://}" --persona=auditor . >"$sarif_file"
+          pipx run --verbose -- \
+              zizmor --verbose --format=sarif --gh-hostname="${GITHUB_SERVER_URL#*://}" --persona=auditor . >"$sarif_file"
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}

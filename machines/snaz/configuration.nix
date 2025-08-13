@@ -7,6 +7,10 @@
     };
   };
 
+  nixpkgs = {
+    hostPlatform = "x86_64-linux";
+  };
+
   users = {
     users = {
       root = {
@@ -24,10 +28,6 @@
     };
   };
 
-  nixpkgs = {
-    hostPlatform = "x86_64-linux";
-  };
-
   services = {
     displayManager = {
       gdm = {
@@ -40,5 +40,9 @@
         enable = true;
       };
     };
+  };
+
+  system = {
+    stateVersion = "25.11";
   };
 }

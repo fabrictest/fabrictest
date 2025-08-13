@@ -93,6 +93,9 @@
         inventory = {
           machines = {
             snaz = {
+              deploy = {
+                targetHost = "root@192.168.100.173";
+              };
               # TODO(eff): Define tags.
               tags = [ ];
             };
