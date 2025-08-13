@@ -57,6 +57,19 @@
       };
     };
 
+    mk-shell-bin = {
+      url = "github:rrbutani/nix-mk-shell-bin";
+    };
+
+    nix2container = {
+      url = "github:nlewo/nix2container";
+      inputs = {
+        nixpkgs = {
+          follows = "nixpkgs";
+        };
+      };
+    };
+
     nixpkgs = {
       url = "github:NixOS/nixpkgs/nixos-unstable";
     };
@@ -71,6 +84,7 @@
     inputs@{
       clan-core,
       devenv,
+      devenv-root,
       flake-parts,
       nixpkgs,
       systems,
@@ -187,6 +201,14 @@
           devenv = {
             shells = {
               default = {
+                devenv = {
+                  root =
+                    let
+                      root = readFile devenv-root.outPath;
+                    in
+                    mkIf (root != "") root;
+                };
+
                 name = "fabrictest";
 
                 enterShell = ''
