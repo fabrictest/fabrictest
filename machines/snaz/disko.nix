@@ -16,9 +16,15 @@
         services = {
           zfs-rollback-root = {
             description = "Rollback the root filesystem to a pristine state on boot";
-            wantedBy = [ "initrd.target" ];
-            after = [ "zfs-import-tank1.service" ];
-            before = [ "sysroot.mount" ];
+            wantedBy = [
+              "initrd.target"
+            ];
+            after = [
+              "zfs-import-tank1.service"
+            ];
+            before = [
+              "sysroot.mount"
+            ];
             unitConfig = {
               DefaultDependencies = "no";
             };

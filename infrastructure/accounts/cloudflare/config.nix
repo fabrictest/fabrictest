@@ -1,9 +1,12 @@
 { lib, ... }:
 with lib;
+let
+  modules = import ../../../modules;
+in
 {
-  imports = [
-    ../../../modules/terranix/backend/git.nix
-    ../../../modules/terranix/providers/cloudflare.nix
+  imports = with modules.terranix; [
+    backend.git
+    providers.cloudflare
   ];
 
   backend.git.state = "accounts/cloudflare/live";

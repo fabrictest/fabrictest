@@ -19,7 +19,6 @@ in
               type = str;
               default = var_username;
             };
-
             token = mkOption {
               description = "Token for accessing the Migadu API";
               type = str;
@@ -31,7 +30,6 @@ in
       };
     };
   };
-
   config = {
     terraform = {
       required_providers = {
@@ -40,18 +38,15 @@ in
         };
       };
     };
-
     provider = {
-      migadu = cfg;
+      migadu = { inherit (cfg) username token; };
     };
-
     variable = {
       migadu_username = mkIf (cfg.username == var_username) {
         description = "Username for accessing the Migadu API";
         type = "string";
         sensitive = true;
       };
-
       migadu_token = mkIf (cfg.token == var_token) {
         description = "Token for accessing the Migadu API";
         type = "string";

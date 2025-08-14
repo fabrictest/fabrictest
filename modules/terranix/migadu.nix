@@ -13,36 +13,11 @@ let
 
   asSlug = replaceString "." "_";
 
-  slugify = domainName: localPart: asSlug "${domainName}_${localPart}";
+  pipeThru = ops: data: pipe data ops;
+
+  slugify = domainName: localPart: asSlug "${domainName}.${localPart}";
 
   emailify = domainName: localPart: "${localPart}@${domainName}";
-
-  resource.cloudflare_zone =
-    let
-      inherit (cfg) domains;
-      allDomainNames = pipe domains [
-        attrValues
-        (map (getAttr "aliases"))
-        (map attrNames)
-        flatten
-        (concat domains)
-      ];
-    in
-    my.mapToAttrs (
-      name:
-      nameValuePair (asSlug name) {
-        account = {
-          id = tfRef "data.terraform_remote_state.accounts_cloudflare.outputs.id";
-        };
-        inherit name;
-        type = "full";
-      }
-    ) allDomainNames;
-
-  resource.cloudflare_zone_dnssec = mapAttrs (slug: _: {
-    zone_id = tfRef "cloudflare_zone.${slug}.id";
-    status = "active";
-  }) resource.cloudflare_zone;
 
   dnsRecordsFor =
     name:
@@ -218,108 +193,6 @@ let
       (mapAttrsToList (type_: mapAttrs' (name: nameValuePair "${slug}_${type_}${name}")))
       mergeAttrsList
     ];
-
-  resource.cloudflare_dns_record = pipe cfg [
-    (getAttr "domains")
-    (
-      d:
-      pipe d [
-        attrValues
-        (map (getAttr "aliases"))
-        (concat [ d ])
-        mergeAttrsList
-      ]
-    )
-    (mapAttrsToList dnsRecordsFor)
-    mergeAttrsList
-  ];
-
-  resource.migadu_mailbox = pipe cfg [
-    (getAttr "domains")
-    (mapAttrs (_: getAttr "mailboxes"))
-    (mapAttrsToList (
-      domain_name:
-      mapAttrs' (
-        local_part:
-        { name, ... }:
-        let
-          slug = slugify domain_name local_part;
-        in
-        nameValuePair slug {
-          inherit domain_name local_part name;
-          password = tfRef "random_password.${slug}.result";
-          may_access_imap = true;
-          may_access_manage_sieve = true;
-          may_access_pop3 = true;
-          may_send = true;
-          may_receive = true;
-        }
-      )
-    ))
-    mergeAttrsList
-  ];
-
-  resource.random_password = mapAttrs (
-    _:
-    { domain_name, local_part, ... }:
-    {
-      keepers = {
-        inherit domain_name local_part;
-      };
-      length = 64;
-    }
-  ) resource.migadu_mailbox;
-
-  resource.migadu_alias =
-    let
-      standardAliases = [
-        "abuse"
-        "noc"
-        "security"
-        "postmaster"
-        "webmaster"
-      ];
-      adminAliases = [ "admin" ];
-      adminAddrs = pipe cfg [
-        (getAttr "domains")
-        (mapAttrs (_: getAttr "mailboxes"))
-        (mapAttrs (
-          domainName: mailboxes:
-          pipe mailboxes [
-            (filterAttrs (_: getAttr "admin"))
-            attrNames
-            (map (emailify domainName))
-          ]
-        ))
-      ];
-    in
-    pipe
-      {
-        domain_name = attrNames cfg.domains;
-        local_part = standardAliases ++ adminAliases;
-      }
-      [
-        cartesianProduct
-        (filter (
-          { local_part, domain_name }:
-          !elem local_part adminAliases
-          || (hasAttr domain_name adminAddrs && adminAddrs.${domain_name} != [ ])
-        ))
-        (my.mapToAttrs (
-          { domain_name, local_part }@value:
-          {
-            name = slugify domain_name local_part;
-            value = value // {
-              destinations =
-                if elem local_part adminAliases then
-                  adminAddrs.${domain_name}
-                else
-                  map (emailify domain_name) adminAliases;
-            };
-          }
-        ))
-      ];
-
 in
 {
   options = {
@@ -390,7 +263,126 @@ in
     data = {
       terraform_remote_state = my.tfRemoteStates [ "accounts/cloudflare" ];
     };
+    resource = rec {
+      cloudflare_zone =
+        let
+          allDomainNames = pipe cfg.domains [
+            attrValues
+            (map (v: v.aliases))
+            (concat [ cfg.domains ])
+            (map attrNames)
+            flatten
+          ];
+        in
+        my.mapToAttrs (
+          name:
+          nameValuePair (asSlug name) {
+            account = {
+              id = tfRef "data.terraform_remote_state.accounts_cloudflare.outputs.id";
+            };
+            inherit name;
+            type = "full";
+          }
+        ) allDomainNames;
 
-    inherit resource;
+      cloudflare_zone_dnssec = mapAttrs (slug: _: {
+        zone_id = tfRef "cloudflare_zone.${slug}.id";
+        status = "active";
+      }) cloudflare_zone;
+
+      cloudflare_dns_record = pipe cfg.domains [
+        attrValues
+        (map (v: v.aliases))
+        (concat [ cfg.domains ])
+        mergeAttrsList
+        (mapAttrsToList dnsRecordsFor)
+        mergeAttrsList
+      ];
+
+      migadu_mailbox = pipe cfg.domains [
+        (mapAttrs (_: v: v.mailboxes))
+        (mapAttrsToList (
+          domain_name:
+          mapAttrs' (
+            local_part:
+            { name, ... }:
+            let
+              slug = slugify domain_name local_part;
+            in
+            nameValuePair slug {
+              inherit domain_name local_part name;
+              password = tfRef "random_password.${slug}.result";
+              may_access_imap = true;
+              may_access_manage_sieve = true;
+              may_access_pop3 = true;
+              may_send = true;
+              may_receive = true;
+            }
+          )
+        ))
+        mergeAttrsList
+      ];
+
+      random_password = mapAttrs (
+        _:
+        { domain_name, local_part, ... }:
+        {
+          keepers = {
+            inherit domain_name local_part;
+          };
+          length = 64;
+        }
+      ) migadu_mailbox;
+
+      migadu_alias =
+        let
+          standardAliases = [
+            "abuse"
+            "noc"
+            "security"
+            "postmaster"
+            "webmaster"
+          ];
+          adminAliases = [ "admin" ];
+          adminAddrs = pipe cfg.domains [
+            (mapAttrs (_: v: v.mailboxes))
+            (mapAttrs (
+              domainName:
+              pipeThru [
+                (filterAttrs (_: v: v.admin))
+                attrNames
+                (map (emailify domainName))
+              ]
+            ))
+          ];
+        in
+        pipe
+          {
+            domain_name = attrNames cfg.domains;
+            local_part = standardAliases ++ adminAliases;
+          }
+          [
+            cartesianProduct
+            (filter (
+              { local_part, domain_name }:
+              !elem local_part adminAliases
+              || (hasAttr domain_name adminAddrs && adminAddrs.${domain_name} != [ ])
+            ))
+            (my.mapToAttrs (
+              { domain_name, local_part }@value:
+              {
+                name = slugify domain_name local_part;
+                value = value // {
+                  destinations =
+                    if elem local_part adminAliases then
+                      adminAddrs.${domain_name}
+                    else
+                      map (emailify domain_name) adminAliases;
+                };
+              }
+            ))
+          ];
+    };
+
   };
 }

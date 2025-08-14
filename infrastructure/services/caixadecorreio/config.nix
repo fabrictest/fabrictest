@@ -27,12 +27,24 @@ in
     ../../../modules/terranix/migadu.nix
   ];
 
-  backend.git.state = "networking/caixadecorreio";
+  backend = {
+    git = {
+      state = "networking/caixadecorreio";
+    };
+  };
 
   migadu = {
-    domains."caixadecorre.io".verify = "tloqjtbj";
-    domains."caixadecorre.io".aliases."ecorre.io".verify = "a8g9xgv4";
-    domains."caixadecorre.io".mailboxes = import ./mailboxes.nix;
+    domains = {
+      "caixadecorre.io" = {
+        verify = "tloqjtbj";
+        aliases = {
+          "ecorre.io" = {
+            verify = "a8g9xgv4";
+          };
+        };
+        mailboxes = import ./mailboxes.nix;
+      };
+    };
   };
 
   # TODO(eff): I don't yet have a clear idea how to implement identities.

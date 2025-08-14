@@ -9,49 +9,46 @@ in
     backend = {
       git = mkOption {
         description = "Terraform back-end settings";
-
         type = submodule {
           options = {
-            type = mkOption {
-              type = "str";
-              default = "git";
-              internal = true;
-              visible = false;
-            };
-
             repository = mkOption {
               description = "URL of the Git repository";
               type = str;
               default = "git@github.com:fabrictest/terraform.tfstate";
             };
-
-            ref = mkOption {
+            branch = mkOption {
               description = "Branch to store the authoritative state";
               type = str;
               default = "main";
             };
-
             state = mkOption {
               description = "Path to the state directory in the Git repository";
               type = str;
-              apply = p: p ++ "/terraform.tfstate";
             };
           };
         };
-
         default = { };
       };
     };
   };
-
   config = {
     terraform = {
       backend = {
-        http = rec {
-          address = "http://127.0.0.1:6061/?${concatMapAttrsStringSep "&" (n: v: "${n}=${v}") cfg}";
-          lock_address = address;
-          unlock_address = address;
-        };
+        http =
+          let
+            address = "http://127.0.0.1:6061/?${queryStr}";
+            queryStr = concatMapAttrsStringSep "&" (n: v: "${n}=${v}") {
+              inherit (cfg) repository;
+              type = "git";
+              ref = cfg.branch;
+              state = "${cfg.state}/terraform.tfstate";
+            };
+          in
+          {
+            inherit address;
+            lock_address = address;
+            unlock_address = address;
+          };
       };
     };
   };

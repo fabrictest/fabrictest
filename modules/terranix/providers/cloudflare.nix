@@ -12,17 +12,18 @@ in
       cloudflare = mkOption {
         description = "Settings for the Cloudflare provider";
         type = submodule {
-          options.token = mkOption {
-            description = "Token for accessing the Cloudflare API";
-            type = str;
-            default = var_token;
+          options = {
+            token = mkOption {
+              description = "Token for accessing the Cloudflare API";
+              type = str;
+              default = var_token;
+            };
           };
         };
         default = { };
       };
     };
   };
-
   config = {
     terraform = {
       required_providers = {
@@ -31,13 +32,11 @@ in
         };
       };
     };
-
     provider = {
       cloudflare = {
         api_token = cfg.token;
       };
     };
-
     variable = {
       cloudflare_token = mkIf (cfg.token == var_token) {
         description = "Token for accessing the Cloudflare API";
