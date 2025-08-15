@@ -195,6 +195,10 @@
             "dset1/tier1/host" = {
               # example: dset1/tier1/host/wg, .....
               type = "zfs_fs";
+              options = {
+                mountpoint = "legacy";
+              };
+              mountpoint = "/_";
             };
             "dset1/tier2" = {
               # just persistence between reboots, no backup
