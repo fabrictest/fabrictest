@@ -2,25 +2,25 @@
 with lib;
 rec {
 
-  tfRemoteStates = mapToAttrs (name: {
+  terraformRemoteStates = mapToAttrs (name: {
     name = replaceString "/" "_" name;
-    value = tfRemoteState name;
+    value = terraformRemoteState name;
   });
 
-  tfRemoteState =
+  terraformRemoteState =
     name:
-    tfRemoteStateWith {
+    terraformRemoteStateWith {
       modules = [ ../infrastructure/${name}/config.nix ];
     };
 
-  tfRemoteStateWith =
+  terraformRemoteStateWith =
     { modules }:
     rec {
       backend = "http";
-      config = (tfConfigWith { inherit modules; }).config.terraform.backend.${backend};
+      config = (terranixConfigWith { inherit modules; }).config.terraform.backend.${backend};
     };
 
-  tfConfigWith =
+  terranixConfigWith =
     { modules }:
     import (terranix + /core) {
       inherit pkgs;

@@ -42,9 +42,8 @@ in
 
   config = {
     data = {
-      terraform_remote_state = my.tfRemoteStates [ "accounts/cloudflare" ];
+      terraform_remote_state = my.terraformRemoteStates [ "accounts/cloudflare" ];
     };
-
     resource = {
       cloudflare_zone = pipe cfg [
         (getAttr "zones")
@@ -59,7 +58,6 @@ in
           }
         ))
       ];
-
       cloudflare_zone_dnssec = pipe cfg [
         (getAttr "zones")
         (mapAttrs (_: getAttr "dnssec"))

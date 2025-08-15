@@ -261,7 +261,7 @@ in
 
   config = {
     data = {
-      terraform_remote_state = my.tfRemoteStates [ "accounts/cloudflare" ];
+      terraform_remote_state = my.terraformRemoteStates [ "accounts/cloudflare" ];
     };
     resource = rec {
       cloudflare_zone =
