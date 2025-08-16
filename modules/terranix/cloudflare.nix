@@ -30,7 +30,7 @@ in
   };
 
   imports = [
-    ./providers/cloudflare.nix
+    ./provider/cloudflare.nix
   ];
 
   config = {

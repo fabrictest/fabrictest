@@ -255,8 +255,8 @@ in
   };
 
   imports = [
-    ./providers/cloudflare.nix
-    ./providers/migadu.nix
+    ./provider/cloudflare.nix
+    ./provider/migadu.nix
   ];
 
   config = {

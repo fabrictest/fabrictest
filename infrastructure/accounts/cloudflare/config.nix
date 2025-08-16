@@ -6,7 +6,7 @@ in
 {
   imports = with modules.terranix; [
     backend.git
-    providers.cloudflare
+    provider.cloudflare
   ];
 
   backend.git.state = "accounts/cloudflare/live";
