@@ -1,42 +1,24 @@
 { config, ... }:
 {
-  boot = {
-    loader = {
-      efi = {
-        canTouchEfiVariables = true;
-      };
-      systemd-boot = {
-        enable = true;
-        editor = false;
-      };
+  boot.loader.efi.canTouchEfiVariables = true;
+
+  boot.loader.systemd-boot.enable = true;
+
+  boot.initrd.systemd.enable = true;
+
+  boot.initrd.systemd.services.zfs-rollback-root = {
+    description = "Rollback the root filesystem to a pristine state";
+    wantedBy = [ "initrd.target" ];
+    after = [ "zfs-import-tank1.service" ];
+    before = [ "sysroot.mount" ];
+    unitConfig = {
+      DefaultDependencies = "no";
     };
-    initrd = {
-      systemd = {
-        enable = true;
-        services = {
-          zfs-rollback-root = {
-            description = "Rollback the root filesystem to a pristine state on boot";
-            wantedBy = [
-              "initrd.target"
-            ];
-            after = [
-              "zfs-import-tank1.service"
-            ];
-            before = [
-              "sysroot.mount"
-            ];
-            unitConfig = {
-              DefaultDependencies = "no";
-            };
-            serviceConfig = {
-              Type = "oneshot";
-            };
-            path = [ config.boot.zfs.package ];
-            script = "zfs rollback -r tank1/dset1/tier2/root@blank";
-          };
-        };
-      };
+    serviceConfig = {
+      Type = "oneshot";
     };
+    path = [ config.boot.zfs.package ];
+    script = "zfs rollback -r tank1/dset1/tier2/root@blank";
   };
 
   disko = {
@@ -198,7 +180,7 @@
               options = {
                 mountpoint = "legacy";
               };
-              mountpoint = "/_";
+              mountpoint = "/+";
             };
             "dset1/tier2" = {
               # just persistence between reboots, no backup

@@ -189,146 +189,124 @@
         }:
         with lib;
         {
-          _module = {
-            args = {
-              pkgs = import nixpkgs {
-                inherit system;
-                config = {
-                  allowUnfree = true;
-                };
-              };
+          _module.args.pkgs = import nixpkgs {
+            inherit system;
+            config = {
+              allowUnfree = true;
             };
           };
 
-          devenv = {
-            shells = {
-              default = {
-                devenv = {
-                  root =
-                    let
-                      root = readFile devenv-root.outPath;
-                    in
-                    mkIf (root != "") root;
+          devenv.shells.default = {
+            devenv.root =
+              let
+                root = readFile devenv-root.outPath;
+              in
+              mkIf (root != "") root;
+
+            name = "fabrictest";
+
+            enterShell = ''
+              echo TODO
+            '';
+
+            enterTest = ''
+              echo TODO
+            '';
+
+            overlays = [ ];
+
+            # TODO(eff): Extract terranix devenv module.
+
+            packages = with pkgs; [
+              git
+              (opentofu.withPlugins (p: [
+                p.cloudflare
+                p.migadu
+                p.random
+              ]))
+              terranix
+
+              clan-core.packages.${system}.clan-cli
+
+              # Zed
+              nil
+              nixd
+            ];
+
+            tasks = { };
+
+            processes.terraform-backend-git = rec {
+              exec = getExe pkgs.terraform-backend-git;
+              process-compose = {
+                availability = {
+                  restart = "on_failure";
                 };
-
-                name = "fabrictest";
-
-                enterShell = ''
-                  echo TODO
-                '';
-
-                enterTest = ''
-                  echo TODO
-                '';
-
-                overlays = [ ];
-
-                # TODO(eff): Extract terranix devenv module.
-
-                packages = with pkgs; [
-                  git
-                  (opentofu.withPlugins (p: [
-                    p.cloudflare
-                    p.migadu
-                    p.random
-                  ]))
-                  terranix
-
-                  clan-core.packages.${system}.clan-cli-full
-
-                  # Zed
-                  nil
-                  nixd
-                ];
-
-                tasks = { };
-
-                processes = {
-                  terraform-backend-git =
-                    let
-                      exec = getExe pkgs.terraform-backend-git;
-                    in
-                    {
-                      inherit exec;
-                      process-compose = {
-                        availability = {
-                          restart = "on_failure";
-                        };
-                        shutdown = {
-                          command = "${exec} stop";
-                        };
-                      };
-                    };
-                };
-
-                services = { };
-
-                cachix = {
-                  enable = true;
-                  push = "fabrictest";
-                };
-
-                git-hooks = {
-                  hooks = {
-                    treefmt = {
-                      enable = true;
-                      settings = {
-                        formatters = with pkgs; [
-                          # *
-                          keep-sorted
-
-                          # JSON
-                          jsonfmt
-
-                          # Markdown
-                          mdformat
-                          mdsh
-
-                          # Nix
-                          deadnix
-                          nixfmt-rfc-style
-                          statix
-
-                          # Shell
-                          shfmt
-
-                          # TOML
-                          taplo
-
-                          # YAML
-                          yamlfmt
-                          yamllint
-                        ];
-                      };
-                    };
-
-                    # TODO(eff): Should we add linters to treefmt as well?
-
-                    actionlint = {
-                      enable = true;
-                    };
-
-                    editorconfig-checker = {
-                      enable = true;
-                    };
-
-                    shellcheck = {
-                      enable = true;
-                    };
-
-                    # TODO(eff): Add a new hook for zizmor.
-                  };
-                };
-
-                delta = {
-                  enable = true;
-                };
-
-                difftastic = {
-                  enable = true;
+                shutdown = {
+                  command = "${exec} stop";
                 };
               };
             };
+
+            services = { };
+
+            cachix = {
+              enable = true;
+              push = "fabrictest";
+            };
+
+            git-hooks.hooks = {
+              treefmt = {
+                enable = true;
+                settings = {
+                  formatters = with pkgs; [
+                    # *
+                    keep-sorted
+
+                    # JSON
+                    jsonfmt
+
+                    # Markdown
+                    mdformat
+                    mdsh
+
+                    # Nix
+                    deadnix
+                    nixfmt-rfc-style
+                    statix
+
+                    # Shell
+                    shfmt
+
+                    # TOML
+                    taplo
+
+                    # YAML
+                    yamlfmt
+                    yamllint
+                  ];
+                };
+              };
+
+              # TODO(eff): Should we add linters to treefmt as well?
+
+              actionlint = {
+                enable = true;
+              };
+
+              editorconfig-checker = {
+                enable = true;
+              };
+
+              shellcheck = {
+                enable = true;
+              };
+
+              # TODO(eff): Add a new hook for zizmor.
+            };
+
+            delta.enable = true;
+
+            difftastic.enable = true;
           };
         };
 
