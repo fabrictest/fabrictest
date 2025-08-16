@@ -22,14 +22,7 @@ in
               description = "Name of the DNS zone";
               type = str;
             };
-
             dnssec = mkEnableOption "DNSSEC";
-
-            # TODO(eff): Pass tags down to resources.
-            tags = mkOption {
-              type = attrsOf (strMatching "[[:alnum:]_]+");
-              default = { };
-            };
           };
         });
       };
@@ -44,50 +37,62 @@ in
     data = {
       terraform_remote_state = my.terraformRemoteStates [ "accounts/cloudflare" ];
     };
+
     resource = {
-      cloudflare_zone = pipe cfg [
-        (getAttr "zones")
-        (mapAttrs (_: getAttr "name"))
-        (mapAttrs (
-          _: name: {
-            account = {
-              id = tfRef "data.terraform_remote_state.accounts_cloudflare.outputs.id";
-            };
-            inherit name;
-            type = "full";
-          }
-        ))
-      ];
-      cloudflare_zone_dnssec = pipe cfg [
-        (getAttr "zones")
-        (mapAttrs (_: getAttr "dnssec"))
-        (mapAttrs (
-          slug: dnssec: {
-            zone_id = tfRef "cloudflare_zone.${slug}.id";
-            status = if dnssec then "active" else "disabled";
-          }
-        ))
-      ];
+      cloudflare_zone = mapAttrs (
+        _:
+        { name, ... }:
+        {
+          inherit name;
+          account = {
+            id = tfRef "data.terraform_remote_state.accounts_cloudflare.outputs.id";
+          };
+          type = "full";
+        }
+      ) cfg.zones;
+
+      cloudflare_zone_dnssec = mapAttrs (
+        slug:
+        { dnssec, ... }:
+        {
+          zone_id = tfRef "cloudflare_zone.${slug}.id";
+          status = if dnssec then "active" else "disabled";
+        }
+      ) cfg.zones;
     };
 
-    output = pipe cfg [
-      (getAttr "zones")
-      (mapAttrs (_: getAttr "name"))
-      (mapAttrsToList (
-        slug: name: {
-          "zones_${slug}_id" = {
-            description = "ID of DNS zone ${name}";
-            value = tfRef "cloudflare_zone.${slug}.id";
-          };
-
-          "zones_${slug}_name" = {
-            description = "Name of DNS zone ${name}";
-            value = tfRef "cloudflare_zone.${slug}.name";
-          };
-        }
-      ))
-      mergeAttrsList
-    ];
+    output =
+      let
+        zoneOutputs = [
+          {
+            value = "id";
+            description = "ID of the DNS zone";
+          }
+          {
+            value = "name";
+            description = "Name of the DNS zone";
+          }
+        ];
+        genZoneOutputs =
+          name:
+          let
+            genZoneOutput =
+              { description, value }:
+              {
+                name = "zones_${name}_${value}";
+                value = {
+                  inherit description;
+                  value = tfRef "cloudflare_zone.${name}.${value}";
+                };
+              };
+          in
+          map genZoneOutput zoneOutputs;
+      in
+      pipe cfg.zones [
+        attrNames
+        (map genZoneOutputs)
+        flatten
+        listToAttrs
+      ];
   };
-
 }

@@ -2,8 +2,6 @@
 with lib;
 with lib.types;
 let
-  cfg = config.providers.migadu;
-
   var_username = tfRef "var.migadu_username";
   var_token = tfRef "var.migadu_token";
 in
@@ -39,15 +37,15 @@ in
       };
     };
     provider = {
-      migadu = { inherit (cfg) username token; };
+      inherit (config.providers) migadu;
     };
     variable = {
-      migadu_username = mkIf (cfg.username == var_username) {
+      migadu_username = mkIf (config.provider.migadu.username == var_username) {
         description = "Username for accessing the Migadu API";
         type = "string";
         sensitive = true;
       };
-      migadu_token = mkIf (cfg.token == var_token) {
+      migadu_token = mkIf (config.provider.migadu.token == var_token) {
         description = "Token for accessing the Migadu API";
         type = "string";
         sensitive = true;

@@ -38,7 +38,7 @@ in
       };
     };
     variable = {
-      cloudflare_token = mkIf (cfg.token == var_token) {
+      cloudflare_token = mkIf (config.provider.cloudflare.api_token == var_token) {
         description = "Token for accessing the Cloudflare API";
         type = "string";
         sensitive = true;

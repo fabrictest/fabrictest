@@ -223,7 +223,7 @@
 
                 overlays = [ ];
 
-                # TODO(eff): Extract terranix module.
+                # TODO(eff): Extract terranix devenv module.
 
                 packages = with pkgs; [
                   git
@@ -234,8 +234,7 @@
                   ]))
                   terranix
 
-                  # XXX(eff): Can we have clan-cli-full without all its dep baggage?
-                  clan-core.packages.${system}.clan-cli
+                  clan-core.packages.${system}.clan-cli-full
 
                   # Zed
                   nil

@@ -120,7 +120,7 @@
         };
         tank2-cash1 = {
           type = "disk";
-          device = "/dev/disk/by-id/nvme-INTEL_HBRPEKNX0202AO_PHTE030001VT512B-2";
+          device = "/dev/disk/by-id/nvme-INTEL_HBRPEKNX0202A_PHTE030001VT512B-1";
           content = {
             type = "gpt";
             partitions = {
