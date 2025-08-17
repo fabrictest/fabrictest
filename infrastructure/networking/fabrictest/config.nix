@@ -1,10 +1,10 @@
 {
   imports = [
-    ../../../modules/terranix/backend/git.nix
-    ../../../modules/terranix/cloudflare.nix
+    ../../../terranixModules/backend/git.nix
+    ../../../terranixModules/cloudflare.nix
   ];
 
-  backend.git.state = "network/live";
+  terraform.backend.git.state = "network/live";
 
   cloudflare.zones.fabrictest_dev = {
     name = "fabrictest.dev";

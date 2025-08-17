@@ -1,8 +1,6 @@
 { lib, ... }:
 with lib;
 let
-  modules = import ../../../modules;
-
   # NOTE(eff): Migadu creates a folder for each plus-address by default. The
   # following rewrite rule disables this feature—all e-mails land into INBOX.
   sendPlusToInbox =
@@ -23,16 +21,12 @@ let
     };
 in
 {
-  imports = with modules.terranix; [
-    backend.git
-    migadu
+  imports = [
+    ../../../terranixModules/backend/git.nix
+    ../../../terranixModules/migadu.nix
   ];
 
-  backend = {
-    git = {
-      state = "networking/caixadecorreio";
-    };
-  };
+  terraform.backend.git.state = "networking/caixadecorreio";
 
   migadu = {
     domains = {

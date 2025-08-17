@@ -1,12 +1,20 @@
+{ config, lib, ... }:
 {
-  system.stateVersion = "25.11";
+  clan.core.settings.state-version.enable = true;
 
-  users.users.root.openssh.authorizedKeys.keys = [
-    # TODO(eff): Decommission SSH key once we get into Bitwarden.
-    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEI496sUFzVECzwdbjWFPwEyGp8tA6OuXKS3qedUXRnF" # tautologicc@illusions
-    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIONucbKwW3mhpLJmWpl2Z9oEH13jldnCeopjwn4u4koV" # eff@snaz
-  ];
+  clan.core.settings.machine-id.enable = true;
+  networking.hostId = lib.substring 0 8 config.clan.core.settings.machine-id.files.machineId.value;
 
-  services.displayManager.gdm.enable = true;
-  services.desktopManager.gnome.enable = true;
+  boot.loader.efi.canTouchEfiVariables = true;
+  boot.loader.systemd-boot.enable = true;
+
+  networking.domain = "fabricte.st";
+
+  services.zfs.autoSnapshot.flags = "-k -p --utc";
+
+  fileSystems."/var/lib/nixos" = {
+    device = "/+/var/lib/nixos";
+    noCheck = true;
+    options = [ "bind" ];
+  };
 }

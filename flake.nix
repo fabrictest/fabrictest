@@ -1,86 +1,47 @@
 {
-  description = "Fabric Test — F.'s homelab";
+  description = "Fabric Test — tautologicc's darknet";
 
-  nixConfig = {
-    # TODO(eff): Add fabrictest cache.
-    extra-substituters = [
-      "https://cache.clan.lol"
-      "https://cache.thalheim.io"
-      "https://devenv.cachix.org"
-      "https://nix-community.cachix.org"
-    ];
-    extra-trusted-public-keys = [
-      "cache.clan.lol-1:3KztgSAB5R1M+Dz7vzkBGzXdodizbgLXGXKXlcQLA28="
-      "cache.thalheim.io-1:R7msbosLEZKrxk/lKxf9BTjOOH7Ax3H0Qj0/6wiHOgc="
-      "devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw="
-      "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
-    ];
-  };
+  # TODO(eff): Add fabrictest cache.
+  nixConfig.extra-substituters = [
+    "https://cache.clan.lol"
+    "https://cache.thalheim.io"
+    "https://devenv.cachix.org"
+    "https://nix-community.cachix.org"
+  ];
 
-  inputs = {
-    clan-core = {
-      url = "github:clan-lol/clan-core";
-      inputs = {
-        flake-parts = {
-          follows = "flake-parts";
-        };
-        nixpkgs = {
-          follows = "nixpkgs";
-        };
-        systems = {
-          follows = "systems";
-        };
-      };
-    };
+  nixConfig.extra-trusted-public-keys = [
+    "cache.clan.lol-1:3KztgSAB5R1M+Dz7vzkBGzXdodizbgLXGXKXlcQLA28="
+    "cache.thalheim.io-1:R7msbosLEZKrxk/lKxf9BTjOOH7Ax3H0Qj0/6wiHOgc="
+    "devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw="
+    "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
+  ];
 
-    devenv = {
-      url = "github:cachix/devenv";
-      inputs = {
-        nixpkgs = {
-          follows = "nixpkgs";
-        };
-        # FIXME(eff): This construct is broken. https://github.com/DeterminateSystems/nix-src/issues/95
-        # git-hooks.inputs.flake-parts.follows = "flake-parts";
-      };
-    };
+  inputs.clan-core.url = "github:clan-lol/clan-core";
+  inputs.clan-core.inputs.flake-parts.follows = "flake-parts";
+  inputs.clan-core.inputs.nixpkgs.follows = "nixpkgs";
+  inputs.clan-core.inputs.systems.follows = "systems";
 
-    devenv-root = {
-      # NOTE(eff): url is overridden in .envrc.
-      url = "file+file:///dev/null";
-      flake = false;
-    };
+  inputs.devenv.url = "github:cachix/devenv";
+  inputs.devenv.inputs.nixpkgs.follows = "nixpkgs";
+  # FIXME(eff): This construct is broken. https://github.com/DeterminateSystems/nix-src/issues/95
+  # inputs.devenv.inputs.git-hooks.inputs.flake-parts.follows = "flake-parts";
 
-    flake-parts = {
-      url = "github:hercules-ci/flake-parts";
-      inputs = {
-        nixpkgs-lib = {
-          follows = "nixpkgs";
-        };
-      };
-    };
+  # NOTE(eff): url is overridden in .envrc.
+  inputs.devenv-root.url = "file+file:///dev/null";
+  inputs.devenv-root.flake = false;
 
-    mk-shell-bin = {
-      url = "github:rrbutani/nix-mk-shell-bin";
-    };
+  inputs.flake-parts.url = "github:hercules-ci/flake-parts";
+  inputs.flake-parts.inputs.nixpkgs-lib.follows = "nixpkgs";
 
-    nix2container = {
-      url = "github:nlewo/nix2container";
-      inputs = {
-        nixpkgs = {
-          follows = "nixpkgs";
-        };
-      };
-    };
+  inputs.mk-shell-bin.url = "github:rrbutani/nix-mk-shell-bin";
 
-    nixpkgs = {
-      url = "github:NixOS/nixpkgs/nixos-unstable";
-    };
+  inputs.nix2container.url = "github:nlewo/nix2container";
+  inputs.nix2container.inputs.nixpkgs.follows = "nixpkgs";
 
-    systems = {
-      url = "path:./flake.systems.nix";
-      flake = false;
-    };
-  };
+  inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+
+  inputs.systems.url = "path:./flake.systems.nix";
+  inputs.systems.flake = false;
 
   outputs =
     inputs@{
@@ -92,226 +53,127 @@
       systems,
       ...
     }:
-    flake-parts.lib.mkFlake { inherit inputs; } {
-      imports = [
-        clan-core.flakeModules.default
-        devenv.flakeModules.default
-      ];
+    flake-parts.lib.mkFlake { inherit inputs; } (
+      { ... }:
+      {
+        imports = [
+          clan-core.flakeModules.default
+          devenv.flakeModules.default
+        ];
 
-      systems = import systems;
+        systems = import systems;
 
-      clan = {
-        meta = {
-          name = "fabrictest";
-          description = "F.'s homelab";
-        };
+        flake.clan.imports = [ ./clan.nix ];
 
-        inventory = {
-          machines = {
-            snaz = {
-              deploy = {
-                targetHost = "root@192.168.100.173";
-              };
-              # TODO(eff): Define tags.
-              tags = [ ];
-            };
-          };
-
-          instances = {
-            admin = {
-              roles = {
-                default = {
-                  tags = {
-                    all = { };
-                  };
-                  settings = {
-                    allowedKeys = {
-                      eff = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIONucbKwW3mhpLJmWpl2Z9oEH13jldnCeopjwn4u4koV";
-                    };
-                  };
-                };
-              };
+        perSystem =
+          {
+            lib,
+            pkgs,
+            system,
+            ...
+          }:
+          with lib;
+          {
+            _module.args.pkgs = import nixpkgs {
+              inherit system;
+              config.allowUnfree = true;
             };
 
-            snaz-user = {
-              module = {
-                input = "clan-core";
-                name = "users";
-              };
+            devenv.shells.default = {
+              devenv.root =
+                let
+                  root = readFile devenv-root.outPath;
+                in
+                mkIf (root != "") root;
 
-              roles = {
-                default = {
-                  tags = {
-                    all = { };
-                  };
+              name = "fabrictest";
 
-                  settings = {
-                    user = "eff";
-                    groups = [
-                      "wheel"
-                      "networkmanager"
-                      "video"
-                      "input"
-                    ];
-                  };
+              enterShell = ''
+                echo TODO
+              '';
 
-                  extraModules = [
-                    ./users/eff/home.nix
-                  ];
+              enterTest = ''
+                echo TODO
+              '';
+
+              overlays = [ ];
+
+              # TODO(eff): Extract terranix devenv module.
+
+              packages = with pkgs; [
+                git
+                (opentofu.withPlugins (p: [
+                  p.cloudflare
+                  p.migadu
+                  p.random
+                ]))
+                terranix
+
+                clan-core.packages.${system}.clan-cli
+
+                # Zed
+                nil
+                nixd
+              ];
+
+              tasks = { };
+
+              processes.terraform-backend-git = rec {
+                exec = getExe pkgs.terraform-backend-git;
+                process-compose = {
+                  availability.restart = "on_failure";
+                  shutdown.command = "${exec} stop";
                 };
               };
-            };
 
-            zerotier = {
-              roles = {
-                controller = {
-                  machines = {
-                    snaz = { };
-                  };
-                };
-                peer = {
-                  tags = {
-                    all = { };
-                  };
-                };
-              };
-            };
-          };
-        };
-      };
+              services = { };
 
-      perSystem =
-        {
-          lib,
-          pkgs,
-          system,
-          ...
-        }:
-        with lib;
-        {
-          _module.args.pkgs = import nixpkgs {
-            inherit system;
-            config = {
-              allowUnfree = true;
-            };
-          };
+              cachix.enable = true;
+              cachix.push = "fabrictest";
 
-          devenv.shells.default = {
-            devenv.root =
-              let
-                root = readFile devenv-root.outPath;
-              in
-              mkIf (root != "") root;
+              git-hooks.hooks.treefmt.enable = true;
+              git-hooks.hooks.treefmt.settings.formatters = with pkgs; [
+                # *
+                keep-sorted
 
-            name = "fabrictest";
+                # JSON
+                jsonfmt
 
-            enterShell = ''
-              echo TODO
-            '';
+                # Markdown
+                mdformat
+                mdsh
 
-            enterTest = ''
-              echo TODO
-            '';
+                # Nix
+                deadnix
+                nixfmt-rfc-style
+                statix
 
-            overlays = [ ];
+                # Shell
+                shfmt
 
-            # TODO(eff): Extract terranix devenv module.
+                # TOML
+                taplo
 
-            packages = with pkgs; [
-              git
-              (opentofu.withPlugins (p: [
-                p.cloudflare
-                p.migadu
-                p.random
-              ]))
-              terranix
-
-              clan-core.packages.${system}.clan-cli
-
-              # Zed
-              nil
-              nixd
-            ];
-
-            tasks = { };
-
-            processes.terraform-backend-git = rec {
-              exec = getExe pkgs.terraform-backend-git;
-              process-compose = {
-                availability = {
-                  restart = "on_failure";
-                };
-                shutdown = {
-                  command = "${exec} stop";
-                };
-              };
-            };
-
-            services = { };
-
-            cachix = {
-              enable = true;
-              push = "fabrictest";
-            };
-
-            git-hooks.hooks = {
-              treefmt = {
-                enable = true;
-                settings = {
-                  formatters = with pkgs; [
-                    # *
-                    keep-sorted
-
-                    # JSON
-                    jsonfmt
-
-                    # Markdown
-                    mdformat
-                    mdsh
-
-                    # Nix
-                    deadnix
-                    nixfmt-rfc-style
-                    statix
-
-                    # Shell
-                    shfmt
-
-                    # TOML
-                    taplo
-
-                    # YAML
-                    yamlfmt
-                    yamllint
-                  ];
-                };
-              };
+                # YAML
+                yamlfmt
+                yamllint
+              ];
 
               # TODO(eff): Should we add linters to treefmt as well?
 
-              actionlint = {
-                enable = true;
-              };
+              git-hooks.hooks.actionlint.enable = true;
 
-              editorconfig-checker = {
-                enable = true;
-              };
+              git-hooks.hooks.editorconfig-checker.enable = true;
 
-              shellcheck = {
-                enable = true;
-              };
+              git-hooks.hooks.shellcheck.enable = true;
 
               # TODO(eff): Add a new hook for zizmor.
+
+              delta.enable = true;
+
+              difftastic.enable = true;
             };
-
-            delta.enable = true;
-
-            difftastic.enable = true;
           };
-        };
-
-      flake = {
-
-      };
-    };
+      }
+    );
 }

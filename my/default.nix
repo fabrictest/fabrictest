@@ -15,9 +15,9 @@ rec {
 
   terraformRemoteStateWith =
     { modules }:
-    rec {
+    {
       backend = "http";
-      config = (terranixConfigWith { inherit modules; }).config.terraform.backend.${backend};
+      config = (terranixConfigWith { inherit modules; }).config.terraform.backend.http;
     };
 
   terranixConfigWith =

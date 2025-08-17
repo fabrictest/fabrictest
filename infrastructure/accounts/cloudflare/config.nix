@@ -1,15 +1,12 @@
 { lib, ... }:
 with lib;
-let
-  modules = import ../../../modules;
-in
 {
-  imports = with modules.terranix; [
-    backend.git
-    provider.cloudflare
+  imports = [
+    ../../../terranixModules/backend/git.nix
+    ../../../terranixModules/cloudflare.nix
   ];
 
-  backend.git.state = "accounts/cloudflare/live";
+  terraform.backend.git.state = "accounts/cloudflare/live";
 
   resource.cloudflare_account.fabrictest = {
     name = "Fabric Test";
