@@ -1,12 +1,11 @@
 { lib, ... }:
 with lib;
 {
-  imports = [
-    ../../../terranixModules/backend/git.nix
-    ../../../terranixModules/cloudflare.nix
-  ];
+  imports = [ ../../../terranixModules ];
 
-  terraform.backend.git.state = "accounts/cloudflare/live";
+  tf.backend.path = "accounts/cloudflare/live";
+
+  tf.provider.cloudflare.enable = true;
 
   resource.cloudflare_account.fabrictest = {
     name = "Fabric Test";
@@ -18,7 +17,7 @@ with lib;
   };
 
   output.id = {
-    description = "ID of the account";
+    description = "Account identifier";
     value = tfRef "cloudflare_account.fabrictest.id";
   };
 }
