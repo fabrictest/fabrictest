@@ -21,28 +21,28 @@ let
   ];
 
   # NOTE(eff): The .st ccTLD doesn't support DNSSEC (yet?).
-  dnssecWorksFor = !lib.hasSuffix ".st";
+  dnssecWorksFor = zone: !lib.hasSuffix ".st" zone;
 in
-{
+rec {
   imports = [ ../../../terranixModules ];
 
   tf.backend.state = "network/live";
 
-  tf.remote_state.accounts_cloudflare = ../../accounts/cloudflare/config.nix;
+  tf.provider.cloudflare.enable = true;
+
+  tf.remote_state.accounts_cloudflare.config = ../../accounts/cloudflare/config.nix;
 
   resource.cloudflare_zone = lib.pipe zones [
     (map (zone: {
       name = lib.replaceString "." "_" zone;
-      value = {
-        account = { inherit (config.tf.remote_state.accounts_cloudflare.output) id; };
-        name = zone;
-        type = "full";
-      };
+      value.account.id = config.tf.remote_state.accounts_cloudflare.output.id;
+      value.name = zone;
+      value.type = "full";
     }))
     lib.listToAttrs
   ];
 
-  resource.cloudflare_zone_dnssec = lib.pipe config.resource.cloudflare_zone [
+  resource.cloudflare_zone_dnssec = lib.pipe resource.cloudflare_zone [
     (lib.mapAttrs (_: { name, ... }: name))
     (lib.mapAttrs (
       slug: zone: {
@@ -52,7 +52,7 @@ in
     ))
   ];
 
-  output = lib.pipe config.resource.cloudflare_zone [
+  output = lib.pipe resource.cloudflare_zone [
     (lib.mapAttrs (_: { name, ... }: name))
     (lib.mapAttrsToList (
       slug: zone:

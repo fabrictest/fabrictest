@@ -1,9 +1,8 @@
 { lib, ... }:
-with lib;
 {
   imports = [ ../../../terranixModules ];
 
-  tf.backend.path = "accounts/cloudflare/live";
+  tf.backend.state = "accounts/cloudflare/live";
 
   tf.provider.cloudflare.enable = true;
 
@@ -18,6 +17,6 @@ with lib;
 
   output.id = {
     description = "Account identifier";
-    value = tfRef "cloudflare_account.fabrictest.id";
+    value = lib.tfRef "cloudflare_account.fabrictest.id";
   };
 }

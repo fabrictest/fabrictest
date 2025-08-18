@@ -254,11 +254,6 @@ in
     };
   };
 
-  imports = [
-    ./provider/cloudflare.nix
-    ./provider/migadu.nix
-  ];
-
   config = {
     data = {
       terraform_remote_state = my.terraformRemoteStates [ "accounts/cloudflare" ];

@@ -27,7 +27,7 @@ in
         };
         options.state = lib.mkOption {
           description = ''
-            Path to the state file in the repository.
+            Path to the state directory in the repository.
           '';
           type = lib.types.pathWith {
             absolute = false;

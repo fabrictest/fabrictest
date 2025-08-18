@@ -5,6 +5,8 @@
   ...
 }:
 let
+  tfConfigAst = terranix_config: import (pkgs.terranix + /core) { inherit pkgs terranix_config; };
+
   cfg = config.tf.remote_state;
 in
 {
@@ -13,34 +15,40 @@ in
       Remote state settings.
     '';
     type = lib.types.attrsOf (
-      lib.types.submodule {
-        imports = [ (pkgs.terranix + /core/terraform-options.nix) ];
-        options.output = lib.mkOption {
-          description = "TODO";
-          type = lib.types.attrsOf lib.types.nonEmptyStr;
-          readOnly = true;
-        };
-      }
+      lib.types.submodule (
+        {
+          config,
+          name,
+          ...
+        }:
+        {
+          options.config = lib.mkOption {
+            description = "TODO";
+            type = lib.types.path;
+            apply = config: (tfConfigAst config).config;
+          };
+          options.output = lib.mkOption {
+            description = "TODO";
+            type = lib.types.attrsOf lib.types.nonEmptyStr;
+            readOnly = true;
+            default = lib.mapAttrs (
+              output: _: lib.tfRef "data.terraform_remote_state.${name}.outputs.${output}"
+            ) (config.config.output or { });
+          };
+        }
+      )
     );
     default = { };
   };
 
-  config = lib.pipe cfg [
-    (lib.mapAttrsToList (
-      resource: terranix_config:
-      let
-        terranixConfig = import (pkgs.terranix + /core) { inherit pkgs terranix_config; };
-      in
+  config.data.terraform_remote_state = lib.mkIf (cfg != { }) (
+    lib.mapAttrs (
+      _:
+      { config, ... }:
       {
-        data.terraform_remote_state.${resource} = rec {
-          backend = "http";
-          config = terranixConfig.config.terraform.backend.${backend};
-        };
-        tf.remote_state.${resource}.output = lib.mapAttrs (
-          output: _: lib.tfRef "data.terraform_remote_state.${resource}.outputs.${output}"
-        ) terranixConfig.config.output;
+        backend = "http";
+        config = config.terraform.backend.http;
       }
-    ))
-    lib.mkMerge
-  ];
+    ) cfg
+  );
 }

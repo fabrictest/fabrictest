@@ -8,7 +8,7 @@ init: config.tf.json FORCE
 	tofu $@
 
 config.tf.json: config.nix
-	terranix $< >$@~
+	terranix --show-trace $< >$@~
 	mv $@~ $@
 
 clean: FORCE

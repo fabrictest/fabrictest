@@ -23,7 +23,9 @@ in
 {
   imports = [ ../../../terranixModules ];
 
-  tf.backend.git.path = "networking/caixadecorreio";
+  tf.backend.state = "networking/caixadecorreio";
+
+  tf.provider.migadu.enable = true;
 
   migadu = {
     domains = {

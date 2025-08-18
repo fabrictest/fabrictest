@@ -1,9 +1,7 @@
 {
   imports = [
     ./tf/backend.nix
-    ./tf/provider/cloudflare.nix
-    ./tf/provider/migadu.nix
-    ./tf/provider/random.nix
+    ./tf/provider.nix
     ./tf/remote_state.nix
   ];
 }
