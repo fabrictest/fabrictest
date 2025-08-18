@@ -24,26 +24,28 @@
         members = [ "tank1-disk1" ];
       }
     ];
-
-    options.ashift = "12";
-    options.autotrim = "on";
-
-    rootFsOptions.acltype = "posixacl";
-    rootFsOptions.atime = "on";
-    rootFsOptions.canmount = "off";
-    rootFsOptions.checksum = "blake3";
-    rootFsOptions.compression = "on";
-    rootFsOptions.dnodesize = "auto";
-    rootFsOptions.encryption = "on";
-    # FIXME(eff): Switch to client certificate authZ. https://github.com/Micinek/zfs-encryption
-    rootFsOptions.keyformat = "passphrase";
-    rootFsOptions.keylocation = "prompt";
-    rootFsOptions.mountpoint = "none";
-    rootFsOptions.normalization = "formD";
-    rootFsOptions.relatime = "on";
-    rootFsOptions.utf8only = "on";
-    rootFsOptions.xattr = "sa";
-    rootFsOptions."com.sun:auto-snapshot" = "false";
+    options = {
+      ashift = "12";
+      autotrim = "on";
+    };
+    rootFsOptions = {
+      acltype = "posixacl";
+      atime = "on";
+      canmount = "off";
+      checksum = "blake3";
+      compression = "on";
+      dnodesize = "auto";
+      encryption = "on";
+      # FIXME(eff): Switch to client certificate authZ. https://github.com/Micinek/zfs-encryption
+      keyformat = "passphrase";
+      keylocation = "prompt";
+      mountpoint = "none";
+      normalization = "formD";
+      relatime = "on";
+      utf8only = "on";
+      xattr = "sa";
+      "com.sun:auto-snapshot" = "false";
+    };
   };
 
   # ---
@@ -89,6 +91,7 @@
   };
 
   disko.devices.zpool.tank2 = {
+    mode.topology.cache = [ "tank2-cash1" ];
     mode.topology.vdev = [
       {
         mode = "raidz1";
@@ -99,27 +102,30 @@
         ];
       }
     ];
-    mode.topology.cache = [ "tank2-cash1" ];
 
-    options.ashift = "12";
-    options.autotrim = "on";
+    options = {
+      ashift = "12";
+      autotrim = "on";
+    };
 
-    rootFsOptions.acltype = "posixacl";
-    rootFsOptions.atime = "on";
-    rootFsOptions.canmount = "off";
-    rootFsOptions.checksum = "blake3";
-    rootFsOptions.compression = "on";
-    rootFsOptions.dnodesize = "auto";
-    rootFsOptions.encryption = "on";
-    # FIXME(eff): Switch to client certificate authZ. https://github.com/Micinek/zfs-encryption
-    rootFsOptions.keyformat = "passphrase";
-    rootFsOptions.keylocation = "prompt";
-    rootFsOptions.mountpoint = "none";
-    rootFsOptions.normalization = "formD";
-    rootFsOptions.relatime = "on";
-    rootFsOptions.utf8only = "on";
-    rootFsOptions.xattr = "sa";
-    rootFsOptions."com.sun:auto-snapshot" = "false";
+    rootFsOptions = {
+      acltype = "posixacl";
+      atime = "on";
+      canmount = "off";
+      checksum = "blake3";
+      compression = "on";
+      dnodesize = "auto";
+      encryption = "on";
+      # FIXME(eff): Switch to client certificate authZ. https://github.com/Micinek/zfs-encryption
+      keyformat = "passphrase";
+      keylocation = "prompt";
+      mountpoint = "none";
+      normalization = "formD";
+      relatime = "on";
+      utf8only = "on";
+      xattr = "sa";
+      "com.sun:auto-snapshot" = "false";
+    };
   };
 
   # ---
@@ -131,7 +137,6 @@
   # tier3: temporary, expendable storage, very fast, good for e.g. downloads and video encoding
 
   disko.devices.zpool.tank1.datasets."dset1".type = "zfs_fs";
-
   disko.devices.zpool.tank1.datasets."dset1/tier1".type = "zfs_fs";
   disko.devices.zpool.tank1.datasets."dset1/tier2".type = "zfs_fs";
   disko.devices.zpool.tank1.datasets."dset1/tier3".type = "zfs_fs";
@@ -140,7 +145,6 @@
   disko.devices.zpool.tank1.datasets."dset1/tier3".options.sync = "disabled";
 
   disko.devices.zpool.tank2.datasets."dset2".type = "zfs_fs";
-
   disko.devices.zpool.tank2.datasets."dset2/tier1".type = "zfs_fs";
   disko.devices.zpool.tank2.datasets."dset2/tier2".type = "zfs_fs";
   disko.devices.zpool.tank2.datasets."dset2/tier3".type = "zfs_fs";

@@ -16,32 +16,53 @@
     "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
   ];
 
-  inputs.clan-core.url = "github:clan-lol/clan-core";
-  inputs.clan-core.inputs.flake-parts.follows = "flake-parts";
-  inputs.clan-core.inputs.nixpkgs.follows = "nixpkgs";
-  inputs.clan-core.inputs.systems.follows = "systems";
+  inputs.clan-core = {
+    url = "github:clan-lol/clan-core";
+    inputs.flake-parts.follows = "flake-parts";
+    inputs.nixpkgs.follows = "nixpkgs";
+    inputs.systems.follows = "systems";
+  };
 
-  inputs.devenv.url = "github:cachix/devenv";
-  inputs.devenv.inputs.nixpkgs.follows = "nixpkgs";
-  # FIXME(eff): This construct is broken. https://github.com/DeterminateSystems/nix-src/issues/95
-  # inputs.devenv.inputs.git-hooks.inputs.flake-parts.follows = "flake-parts";
+  inputs.devenv = {
+    url = "github:cachix/devenv";
+    inputs.nixpkgs.follows = "nixpkgs";
+    # FIXME(eff): This construct is broken. https://github.com/DeterminateSystems/nix-src/issues/95
+    # inputs.git-hooks.inputs.flake-parts.follows = "flake-parts";
+  };
 
   # NOTE(eff): url is overridden in .envrc.
-  inputs.devenv-root.url = "file+file:///dev/null";
-  inputs.devenv-root.flake = false;
+  inputs.devenv-root = {
+    url = "file+file:///dev/null";
+    flake = false;
+  };
 
-  inputs.flake-parts.url = "github:hercules-ci/flake-parts";
-  inputs.flake-parts.inputs.nixpkgs-lib.follows = "nixpkgs";
+  inputs.flake-parts = {
+    url = "github:hercules-ci/flake-parts";
+    inputs.nixpkgs-lib.follows = "nixpkgs";
+  };
 
   inputs.mk-shell-bin.url = "github:rrbutani/nix-mk-shell-bin";
 
-  inputs.nix2container.url = "github:nlewo/nix2container";
-  inputs.nix2container.inputs.nixpkgs.follows = "nixpkgs";
+  inputs.nix2container = {
+    url = "github:nlewo/nix2container";
+    inputs.nixpkgs.follows = "nixpkgs";
+  };
 
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
-  inputs.systems.url = "path:./flake.systems.nix";
-  inputs.systems.flake = false;
+  inputs.systems = {
+    url = "path:./flake.systems.nix";
+    flake = false;
+  };
+
+  /*
+    inputs.terranix = {
+      url = "github:terranix/terranix";
+      inputs.flake-parts.follows = "flake-parts";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.systems.follows = "systems";
+    };
+  */
 
   outputs =
     inputs@{

@@ -1,98 +1,73 @@
 {
   config,
   lib,
-  pkgs,
+  # pkgs,
   ...
 }:
-with lib;
-with lib.types;
 let
   cfg = config.cloudflare;
 
-  my = import ../../my pkgs;
+  # my = import ../../my pkgs;
 in
 {
-  options = {
-    cloudflare = {
-      zones = mkOption {
+  options.cloudflare = lib.mkOption {
+    description = "TODO";
+    type = lib.submodule {
+      options.zone = lib.mkOption {
         description = "DNS zones";
-        type = attrsOf (submodule {
-          options = {
-            name = mkOption {
-              description = "Name of the DNS zone";
-              type = str;
+        type = lib.types.attrsOf (
+          lib.types.submodule {
+            options.name = lib.mkOption {
+              description = "Name of the zone";
+              type = lib.types.nonEmptyStr;
             };
-            dnssec = mkEnableOption "DNSSEC";
-          };
-        });
+            options.dnssec = lib.mkEnableOption "DNSSEC";
+          }
+        );
+        default = { };
       };
     };
+    default = { };
   };
 
-  imports = [
-    ./provider/cloudflare.nix
-  ];
+  config = lib.mkMerge [
+    (lib.mkIf (cfg.zone != { }) {
+      # data.terraform_remote_state = my.terraformRemoteStates [ "accounts/cloudflare" ];
+      tf.remote_state.accounts_cloudflare = ../infrastructure/accounts/cloudflare/config.nix;
 
-  config = {
-    data = {
-      terraform_remote_state = my.terraformRemoteStates [ "accounts/cloudflare" ];
-    };
-
-    resource = {
-      cloudflare_zone = mapAttrs (
-        _:
-        { name, ... }:
-        {
-          inherit name;
-          account = {
-            id = tfRef "data.terraform_remote_state.accounts_cloudflare.outputs.id";
-          };
-          type = "full";
-        }
-      ) cfg.zones;
-
-      cloudflare_zone_dnssec = mapAttrs (
-        slug:
-        { dnssec, ... }:
-        {
-          zone_id = tfRef "cloudflare_zone.${slug}.id";
-          status = if dnssec then "active" else "disabled";
-        }
-      ) cfg.zones;
-    };
-
-    output =
-      let
-        zoneOutputs = [
-          {
-            value = "id";
-            description = "ID of the DNS zone";
-          }
-          {
-            value = "name";
-            description = "Name of the DNS zone";
-          }
-        ];
-        genZoneOutputs =
-          name:
-          let
-            genZoneOutput =
-              { description, value }:
-              {
-                name = "zones_${name}_${value}";
-                value = {
-                  inherit description;
-                  value = tfRef "cloudflare_zone.${name}.${value}";
+      output =
+        let
+          zoneOutputs = [
+            {
+              output = "id";
+              description = "ID of the DNS zone";
+            }
+            {
+              output = "name";
+              description = "Name of the DNS zone";
+            }
+          ];
+          genZoneOutputs =
+            name:
+            let
+              genZoneOutput =
+                { description, output }:
+                {
+                  name = "zones_${name}_${output}";
+                  value = {
+                    inherit description;
+                    value = lib.tfRef "cloudflare_zone.${name}.${output}";
+                  };
                 };
-              };
-          in
-          map genZoneOutput zoneOutputs;
-      in
-      pipe cfg.zones [
-        attrNames
-        (map genZoneOutputs)
-        flatten
-        listToAttrs
-      ];
-  };
+            in
+            lib.map genZoneOutput zoneOutputs;
+        in
+        lib.pipe cfg.zone [
+          lib.attrNames
+          (lib.map genZoneOutputs)
+          lib.flatten
+          lib.listToAttrs
+        ];
+    })
+  ];
 }

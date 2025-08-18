@@ -21,12 +21,9 @@ let
     };
 in
 {
-  imports = [
-    ../../../terranixModules/backend/git.nix
-    ../../../terranixModules/migadu.nix
-  ];
+  imports = [ ../../../terranixModules ];
 
-  terraform.backend.git.state = "networking/caixadecorreio";
+  tf.backend.git.path = "networking/caixadecorreio";
 
   migadu = {
     domains = {
