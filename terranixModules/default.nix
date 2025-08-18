@@ -1,7 +1,8 @@
 {
   imports = [
-    ./tf/backend.nix
-    ./tf/provider.nix
-    ./tf/remote_state.nix
+    ./tf.backend.nix
+    ./tf.provider.nix
+    ./tf.remote_state.nix
+    ./migadu.nix
   ];
 }

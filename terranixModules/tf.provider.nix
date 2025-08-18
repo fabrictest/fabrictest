@@ -15,7 +15,7 @@ lib.mkMerge [
           default = { };
         };
         options.migadu = lib.mkOption {
-          description = "Cloudflare provider settings";
+          description = "Migadu provider settings";
           type = lib.types.submodule {
             options.enable = lib.types.mkEnableOption "provider";
           };
