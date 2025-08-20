@@ -1,52 +1,53 @@
 {
   config,
   lib,
-  pkgs,
   ...
 }:
-with lib;
-with lib.types;
 let
   cfg = config.migadu;
 
-  my = import ../../my pkgs;
+  standardAliases = [
+    "abuse"
+    "noc"
+    "security"
+    "postmaster"
+    "webmaster"
+  ];
 
-  asSlug = replaceString "." "_";
+  adminAliases = [ "admin" ];
 
-  pipeThru = ops: data: pipe data ops;
+  adminAddrs = lib.mapAttrs (
+    domain:
+    { mailbox, ... }:
+    lib.pipe mailbox [
+      (lib.filterAttrs (_: v: v.admin))
+      lib.attrNames
+      (lib.map (emailify domain))
+    ]
+  ) cfg.domain;
 
-  slugify = domainName: localPart: asSlug "${domainName}.${localPart}";
+  slugify = lib.replaceString "." "_";
 
-  emailify = domainName: localPart: "${localPart}@${domainName}";
+  slugify2 = domain: user: slugify "${domain}_${user}";
+
+  emailify = domain: user: "${user}@${domain}";
 
   dnsRecordsFor =
     name:
     {
-      verify,
-      alias ? false,
+      verification,
+      _alias ? false,
       ...
     }:
     let
-      slug = asSlug name;
+      slug = slugify name;
 
-      zone_id = tfRef "cloudflare_zone.${slug}.id";
+      zone_id = lib.tfRef "cloudflare_zone.${slug}.id";
 
       proto = "_tcp";
 
       records.mx =
-        my.mapCartesianProductToAttrs
-          (
-            { record, server }:
-            nameValuePair "${server}_${record.type}" {
-              inherit zone_id;
-              inherit (record) name;
-              comment = "Mail eXchanger host #${server} (${record.type})";
-              content = "aspmx${server}.migadu.com";
-              priority = 10 * (toInt server);
-              ttl = 1;
-              type = "MX";
-            }
-          )
+        lib.pipe
           {
             record = [
               {
@@ -62,35 +63,53 @@ let
               "1"
               "2"
             ];
-          };
+          }
+          [
+            (lib.mapCartesianProduct (
+              { record, server }:
+              lib.nameValuePair "${server}_${record.type}" {
+                inherit zone_id;
+                inherit (record) name;
+                comment = "Mail eXchanger host #${server} (${record.type})";
+                content = "aspmx${server}.migadu.com";
+                priority = 10 * (lib.toInt server);
+                ttl = 1;
+                type = "MX";
+              }
+            ))
+            lib.listToAttrs
+          ];
 
       records.dkim =
-        my.mapCartesianProductToAttrs
-          (
-            { server }:
-            nameValuePair server {
-              inherit zone_id;
-              type = "CNAME";
-              name = "key${server}._domainkey.${name}";
-              content = "key${server}.${name}._domainkey.migadu.com";
-              ttl = 1;
-              proxied = false;
-              comment = "DKIM+ARC key #${server}";
-            }
-          )
+        lib.pipe
           {
             server = [
               "1"
               "2"
               "3"
             ];
-          };
+          }
+          [
+            (lib.mapCartesianProduct (
+              { server }:
+              lib.nameValuePair server {
+                inherit zone_id;
+                type = "CNAME";
+                name = "key${server}._domainkey.${name}";
+                content = "key${server}.${name}._domainkey.migadu.com";
+                ttl = 1;
+                proxied = false;
+                comment = "DKIM+ARC key #${server}";
+              }
+            ))
+            lib.listToAttrs
+          ];
 
       records.others = {
         verification = {
           inherit zone_id name;
           type = "TXT";
-          content = ''"hosted-email-verify=${verify}"'';
+          content = ''"hosted-email-verify=${verification}"'';
           ttl = 1;
           comment = "Migadu verification record";
         };
@@ -112,7 +131,7 @@ let
           comment = "DMARC policy";
         };
       }
-      // optionalAttrs (!alias) {
+      // lib.optionalAttrs (!_alias) {
         autoconfig = {
           inherit zone_id;
           type = "CNAME";
@@ -188,196 +207,200 @@ let
         };
       };
     in
-    pipe records [
-      (mapAttrs' (type: nameValuePair (if type == "others" then "" else "${type}_")))
-      (mapAttrsToList (type_: mapAttrs' (name: nameValuePair "${slug}_${type_}${name}")))
-      mergeAttrsList
+    lib.pipe records [
+      (lib.mapAttrs' (type: lib.nameValuePair (if type == "others" then "" else "${type}_")))
+      (lib.mapAttrsToList (type_: lib.mapAttrs' (name: lib.nameValuePair "${slug}_${type_}${name}")))
+      lib.mergeAttrsList
     ];
-in
-{
-  options = {
-    migadu = mkOption {
-      type = submodule {
-        options = {
-          domains = mkOption {
-            type = nullOr (
-              attrsOf (submodule {
-                options = {
-                  verify = mkOption {
-                    description = "TODO TODO TODO TODO TODO";
-                    type = str;
-                    example = "abcdefgh";
-                  };
-                  aliases = mkOption {
-                    type = attrsOf (submodule {
-                      options = {
-                        verify = mkOption {
-                          description = "TODO TODO TODO TODO TODO";
-                          type = str;
-                          example = "abcdefgh";
-                        };
-                        alias = mkOption {
-                          type = bool;
-                          default = true;
-                          internal = true;
-                          visible = false;
-                        };
-                      };
-                    });
-                    default = { };
-                  };
-                  mailboxes = mkOption {
-                    type = attrsOf (submodule {
-                      options = {
-                        name = mkOption {
-                          description = "TODO TODO TODO TODO TODO";
-                          type = str;
-                          example = "Bender Bending Rodriguez";
-                        };
-                        admin = mkOption {
-                          description = "Whether this mailbox belongs to an administrator of this service.";
-                          type = bool;
-                          default = false;
-                          example = true;
-                        };
-                      };
-                    });
-                    default = { };
-                  };
-                };
-              })
-            );
-            default = { };
-          };
+
+  domainModule =
+    {
+      alias ? false,
+    }:
+    {
+      options = {
+        verification = lib.mkOption {
+          description = "TODO TODO TODO TODO TODO";
+          type = lib.types.strMatching ''[a-z0-9]{8}'';
+          example = "abcdefgh";
+        };
+        _alias = lib.mkOption {
+          default = alias;
+          internal = true;
+          visible = false;
+          readOnly = true;
+        };
+      }
+      // lib.optionalAttrs (!alias) {
+        alias = lib.mkOption {
+          description = "TODO";
+          type = lib.types.attrsOf (
+            lib.types.submodule (domainModule {
+              alias = true;
+            })
+          );
+          default = { };
+        };
+        mailbox = lib.mkOption {
+          description = "TODO";
+          type = lib.types.attrsOf (lib.types.submodule mailboxModule);
+          default = { };
         };
       };
     };
+
+  mailboxModule = {
+    options.name = lib.mkOption {
+      description = "TODO";
+      type = lib.types.nonEmptyStr;
+      example = "Bender Bending Rodriguez";
+    };
+    options.admin = lib.mkOption {
+      description = ''
+        Whether this mailbox belongs to an administrator of this service.
+      '';
+      type = lib.types.bool;
+      default = false;
+      example = true;
+    };
   };
 
-  config = {
-    data = {
-      terraform_remote_state = my.terraformRemoteStates [ "accounts/cloudflare" ];
-    };
-    resource = rec {
-      cloudflare_zone =
-        let
-          allDomainNames = pipe cfg.domains [
-            attrValues
-            (map (v: v.aliases))
-            (concat [ cfg.domains ])
-            (map attrNames)
-            flatten
-          ];
-        in
-        my.mapToAttrs (
-          name:
-          nameValuePair (asSlug name) {
-            account = {
-              id = tfRef "data.terraform_remote_state.accounts_cloudflare.outputs.id";
-            };
-            inherit name;
-            type = "full";
-          }
-        ) allDomainNames;
+  mkIfEnabled = lib.mkIf cfg.enable;
+in
+{
+  options.migadu = lib.mkOption {
+    description = "TODO";
+    type = lib.types.submodule (
+      { config, ... }:
+      {
+        options.domain = lib.mkOption {
+          description = "TODO";
+          type = lib.types.attrsOf (lib.types.submodule (domainModule { }));
+          default = { };
+        };
+        options.enable = lib.mkOption {
+          description = "TODO";
+          type = lib.types.bool;
+          readOnly = true;
+          default = config.domain != { };
+        };
+        options._domain = lib.mkOption {
+          internal = true;
+          visible = false;
+          default = config.domain;
+          apply =
+            domain:
+            lib.pipe domain [
+              (lib.mapAttrsToList (_: v: v.alias))
+              (lib.concat [ domain ])
+              lib.mergeAttrsList
+            ];
+        };
+      }
+    );
+    default = { };
+  };
 
-      cloudflare_zone_dnssec = mapAttrs (slug: _: {
-        zone_id = tfRef "cloudflare_zone.${slug}.id";
+  config.tf.provider = lib.genAttrs [ "cloudflare" "migadu" ] (_: {
+    enable = lib.mkDefault cfg.enable;
+  });
+
+  config.resource.cloudflare_zone = mkIfEnabled (
+    lib.mapAttrs' (name: _: {
+      name = slugify name;
+      value.account.id = config.tf.remote_state.accounts_cloudflare.output.id;
+      value.name = name;
+      value.type = "full";
+    }) cfg._domain
+  );
+
+  config.resource.cloudflare_zone_dnssec = mkIfEnabled (
+    lib.pipe cfg._domain [
+      lib.attrNames
+      (lib.map slugify)
+      (lib.flip lib.genAttrs (slug: {
+        zone_id = lib.tfRef "cloudflare_zone.${slug}.id";
         status = "active";
-      }) cloudflare_zone;
+      }))
+    ]
+  );
 
-      cloudflare_dns_record = pipe cfg.domains [
-        attrValues
-        (map (v: v.aliases))
-        (concat [ cfg.domains ])
-        mergeAttrsList
-        (mapAttrsToList dnsRecordsFor)
-        mergeAttrsList
-      ];
+  config.resource.cloudflare_dns_record = mkIfEnabled (
+    lib.pipe cfg._domain [
+      (lib.mapAttrsToList dnsRecordsFor)
+      lib.mergeAttrsList
+    ]
+  );
 
-      migadu_mailbox = pipe cfg.domains [
-        (mapAttrs (_: v: v.mailboxes))
-        (mapAttrsToList (
-          domain_name:
-          mapAttrs' (
-            local_part:
-            { name, ... }:
-            let
-              slug = slugify domain_name local_part;
-            in
-            nameValuePair slug {
-              inherit domain_name local_part name;
-              password = tfRef "random_password.${slug}.result";
-              may_access_imap = true;
-              may_access_manage_sieve = true;
-              may_access_pop3 = true;
-              may_send = true;
-              may_receive = true;
-            }
-          )
-        ))
-        mergeAttrsList
-      ];
-
-      random_password = mapAttrs (
-        _:
-        { domain_name, local_part, ... }:
-        {
-          keepers = {
-            inherit domain_name local_part;
-          };
-          length = 64;
-        }
-      ) migadu_mailbox;
-
-      migadu_alias =
-        let
-          standardAliases = [
-            "abuse"
-            "noc"
-            "security"
-            "postmaster"
-            "webmaster"
-          ];
-          adminAliases = [ "admin" ];
-          adminAddrs = pipe cfg.domains [
-            (mapAttrs (_: v: v.mailboxes))
-            (mapAttrs (
-              domainName:
-              pipeThru [
-                (filterAttrs (_: v: v.admin))
-                attrNames
-                (map (emailify domainName))
-              ]
-            ))
-          ];
-        in
-        pipe
-          {
-            domain_name = attrNames cfg.domains;
-            local_part = standardAliases ++ adminAliases;
+  config.resource.migadu_mailbox = mkIfEnabled (
+    lib.pipe cfg.domain [
+      (lib.mapAttrs (_: v: v.mailbox))
+      (lib.mapAttrsToList (
+        domain:
+        lib.mapAttrs' (
+          user:
+          { name, ... }:
+          let
+            slug = slugify2 domain user;
+          in
+          lib.nameValuePair slug {
+            domain_name = domain;
+            local_part = user;
+            inherit name;
+            password = lib.tfRef "random_password.${slug}.result";
+            may_access_imap = true;
+            may_access_manage_sieve = true;
+            may_access_pop3 = true;
+            may_send = true;
+            may_receive = true;
           }
-          [
-            cartesianProduct
-            (filter (
-              { local_part, domain_name }:
-              !elem local_part adminAliases
-              || (hasAttr domain_name adminAddrs && adminAddrs.${domain_name} != [ ])
-            ))
-            (my.mapToAttrs (
-              { domain_name, local_part }@value:
-              {
-                name = slugify domain_name local_part;
-                value = value // {
-                  destinations =
-                    if elem local_part adminAliases then
-                      adminAddrs.${domain_name}
-                    else
-                      map (emailify domain_name) adminAliases;
-                };
-              }
-            ))
-          ];
-    };
+        )
+      ))
+      lib.mergeAttrsList
+    ]
+  );
 
-  };
+  config.resource.random_password = mkIfEnabled (
+    lib.pipe cfg.domain [
+      (lib.mapAttrs (_: v: v.mailbox))
+      (lib.mapAttrsToList (
+        domain:
+        lib.mapAttrs' (
+          user: _: {
+            name = slugify2 domain user;
+            value.keepers.domain_name = domain;
+            value.keepers.local_part = user;
+            value.length = 64;
+          }
+        )
+      ))
+      lib.mergeAttrsList
+    ]
+  );
+
+  config.resource.migadu_alias = mkIfEnabled (
+    lib.pipe
+      {
+        domain = lib.attrNames cfg.domain;
+        alias = standardAliases ++ adminAliases;
+      }
+      [
+        lib.cartesianProduct
+        (lib.filter ({ domain, alias }: !lib.elem alias adminAliases || adminAddrs.${domain} != [ ]))
+        (lib.map (
+          { domain, alias }:
+          {
+            name = slugify2 domain alias;
+            value.domain_name = domain;
+            value.local_part = alias;
+            value.destinations =
+              if lib.elem alias adminAliases then
+                adminAddrs.${domain}
+              else
+                lib.map (emailify domain) adminAliases;
+          }
+        ))
+        lib.listToAttrs
+      ]
+  );
 }

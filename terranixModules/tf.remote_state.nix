@@ -5,9 +5,9 @@
   ...
 }:
 let
-  tfConfigAst = terranix_config: import (pkgs.terranix + /core) { inherit pkgs terranix_config; };
-
   cfg = config.tf.remote_state;
+
+  tfConfigAst = terranix_config: import (pkgs.terranix + /core) { inherit pkgs terranix_config; };
 in
 {
   options.tf.remote_state = lib.mkOption {

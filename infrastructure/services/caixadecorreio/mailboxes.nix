@@ -1,9 +1,6 @@
 {
-  emerson = {
-    name = "F. Emerson";
-    admin = true;
-  };
-  flora = {
-    name = "Flora Branchi";
-  };
+  emerson.name = "F. Emerson";
+  emerson.admin = true;
+
+  flora.name = "Flora Branchi";
 }

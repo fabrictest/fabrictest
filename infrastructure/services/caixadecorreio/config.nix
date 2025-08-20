@@ -1,15 +1,16 @@
 { lib, ... }:
-with lib;
 let
   # NOTE(eff): Migadu creates a folder for each plus-address by default. The
   # following rewrite rule disables this feature—all e-mails land into INBOX.
   sendPlusToInbox =
     order_num: resource:
     let
-      outputRef = output: tfRef "${resource}.${output}";
+      outputRef = output: lib.tfRef "${resource}.${output}";
       domain_name = outputRef "domain_name";
       local_part = outputRef "local_part";
-      identity = outputRef (if hasPrefix "migadu_identity." resource then "identity" else "local_part");
+      identity = outputRef (
+        if lib.hasPrefix "migadu_identity." resource then "identity" else "local_part"
+      );
     in
     {
       name = "${identity}: route messages from plus-addresses to INBOX";
@@ -25,20 +26,12 @@ in
 
   tf.backend.state = "networking/caixadecorreio";
 
-  tf.provider.migadu.enable = true;
+  tf.remote_state.accounts_cloudflare.config = ../../accounts/cloudflare/config.nix;
 
-  migadu = {
-    domains = {
-      "caixadecorre.io" = {
-        verify = "tloqjtbj";
-        aliases = {
-          "ecorre.io" = {
-            verify = "a8g9xgv4";
-          };
-        };
-        mailboxes = import ./mailboxes.nix;
-      };
-    };
+  migadu.domain."caixadecorre.io" = {
+    verification = "tloqjtbj";
+    alias."ecorre.io".verification = "a8g9xgv4";
+    mailbox = import ./mailboxes.nix;
   };
 
   # TODO(eff): I don't yet have a clear idea how to implement identities.

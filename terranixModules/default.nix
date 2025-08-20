@@ -1,8 +1,10 @@
 {
   imports = [
-    ./tf.backend.nix
-    ./tf.provider.nix
-    ./tf.remote_state.nix
     ./migadu.nix
+    ./tf.backend.nix
+    ./tf.provider.cloudflare.nix
+    ./tf.provider.migadu.nix
+    ./tf.provider.random.nix
+    ./tf.remote_state.nix
   ];
 }
