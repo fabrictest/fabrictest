@@ -2,7 +2,9 @@
   meta.name = "fabrictest";
   meta.description = "tautologicc's darknet";
 
-  inventory.machines.snaz.deploy.targetHost = "root@192.168.100.173";
+  inventory.machines.snaz = {
+    deploy.targetHost = "root@192.168.100.173";
+  };
 
   inventory.instances.admin = {
     roles.default.tags.all = { };

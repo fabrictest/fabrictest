@@ -82,9 +82,9 @@
           devenv.flakeModules.default
         ];
 
-        systems = import systems;
+        flake.clan = ./clan.nix;
 
-        flake.clan.imports = [ ./clan.nix ];
+        systems = import systems;
 
         perSystem =
           {
