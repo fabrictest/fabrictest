@@ -28,7 +28,7 @@
   inventory.instances.wifi = {
     roles.default.tags.office = { };
     roles.default.settings = {
-      networks."FloraCastle" = { };
+      networks.office = { };
     };
   };
 }
