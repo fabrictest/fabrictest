@@ -8,6 +8,7 @@
   boot.loader.efi.canTouchEfiVariables = true;
   boot.loader.systemd-boot.enable = true;
 
+  networking.useNetworkd = true;
   networking.domain = "fabricte.st";
 
   services.zfs.autoSnapshot.flags = "-k -p --utc";
