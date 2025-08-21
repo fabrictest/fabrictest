@@ -180,7 +180,7 @@
   };
 
   disko.devices.zpool.tank1.datasets."ds1/tier1/safe" = {
-    # example: tank1/ds1/tier1/safe/etc/wireguard, .....
+    # example: /etc/wireguard -> /+/etc/wireguard, .....
     type = "zfs_fs";
     options.mountpoint = "legacy";
     mountpoint = "/+";
