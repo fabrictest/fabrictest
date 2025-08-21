@@ -55,145 +55,29 @@
     flake = false;
   };
 
-  /*
-    inputs.terranix = {
-      url = "github:terranix/terranix";
-      inputs.flake-parts.follows = "flake-parts";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.systems.follows = "systems";
-    };
-  */
-
   outputs =
-    inputs@{
-      clan-core,
-      devenv,
-      devenv-root,
-      flake-parts,
-      nixpkgs,
-      systems,
-      ...
-    }:
-    flake-parts.lib.mkFlake { inherit inputs; } (
+    inputs:
+    inputs.flake-parts.lib.mkFlake { inherit inputs; } (
       { ... }:
       {
         imports = [
-          clan-core.flakeModules.default
-          devenv.flakeModules.default
+          inputs.clan-core.flakeModules.default
+          inputs.devenv.flakeModules.default
         ];
 
-        flake.clan = ./clan.nix;
+        clan = ./clan.nix;
 
-        systems = import systems;
+        systems = import inputs.systems;
 
         perSystem =
+          { system, ... }:
           {
-            lib,
-            pkgs,
-            system,
-            ...
-          }:
-          with lib;
-          {
-            _module.args.pkgs = import nixpkgs {
+            _module.args.pkgs = import inputs.nixpkgs {
               inherit system;
               config.allowUnfree = true;
             };
 
-            devenv.shells.default = {
-              devenv.root =
-                let
-                  root = readFile devenv-root.outPath;
-                in
-                mkIf (root != "") root;
-
-              name = "fabrictest";
-
-              enterShell = ''
-                echo TODO
-              '';
-
-              enterTest = ''
-                echo TODO
-              '';
-
-              overlays = [ ];
-
-              # TODO(eff): Extract terranix devenv module.
-
-              packages = with pkgs; [
-                git
-                (opentofu.withPlugins (p: [
-                  p.cloudflare
-                  p.migadu
-                  p.random
-                ]))
-                terranix
-
-                clan-core.packages.${system}.clan-cli
-
-                # Zed
-                nil
-                nixd
-              ];
-
-              tasks = { };
-
-              processes.terraform-backend-git = rec {
-                exec = getExe pkgs.terraform-backend-git;
-                process-compose = {
-                  availability.restart = "on_failure";
-                  shutdown.command = "${exec} stop";
-                };
-              };
-
-              services = { };
-
-              cachix.enable = true;
-              cachix.push = "fabrictest";
-
-              git-hooks.hooks.treefmt.enable = true;
-              git-hooks.hooks.treefmt.settings.formatters = with pkgs; [
-                # *
-                keep-sorted
-
-                # JSON
-                jsonfmt
-
-                # Markdown
-                mdformat
-                mdsh
-
-                # Nix
-                deadnix
-                nixfmt-rfc-style
-                statix
-
-                # Shell
-                shfmt
-
-                # TOML
-                taplo
-
-                # YAML
-                yamlfmt
-                yamllint
-              ];
-
-              # TODO(eff): Should we add linters to treefmt as well?
-
-              git-hooks.hooks.actionlint.enable = true;
-
-              git-hooks.hooks.editorconfig-checker.enable = true;
-
-              git-hooks.hooks.shellcheck.enable = true;
-
-              # TODO(eff): Add a new hook for zizmor.
-
-              delta.enable = true;
-
-              difftastic.enable = true;
-            };
+            devenv.shells.default = ./devenv.nix;
           };
       }
     );

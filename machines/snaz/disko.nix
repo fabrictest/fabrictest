@@ -136,31 +136,29 @@
   # tier2: just persistence between reboots, no backup
   # tier3: temporary, expendable storage, very fast, good for e.g. downloads and video encoding
 
-  disko.devices.zpool.tank1.datasets."dset1".type = "zfs_fs";
-  disko.devices.zpool.tank1.datasets."dset1/tier1".type = "zfs_fs";
-  disko.devices.zpool.tank1.datasets."dset1/tier2".type = "zfs_fs";
-  disko.devices.zpool.tank1.datasets."dset1/tier3".type = "zfs_fs";
+  disko.devices.zpool.tank1.datasets."ds1".type = "zfs_fs";
+  disko.devices.zpool.tank1.datasets."ds1/tier1".type = "zfs_fs";
+  disko.devices.zpool.tank1.datasets."ds1/tier1".options."com.sun:auto-snapshot" = "true";
+  disko.devices.zpool.tank1.datasets."ds1/tier2".type = "zfs_fs";
+  disko.devices.zpool.tank1.datasets."ds1/tier3".type = "zfs_fs";
+  disko.devices.zpool.tank1.datasets."ds1/tier3".options.sync = "disabled";
 
-  disko.devices.zpool.tank1.datasets."dset1/tier1".options."com.sun:auto-snapshot" = "true";
-  disko.devices.zpool.tank1.datasets."dset1/tier3".options.sync = "disabled";
-
-  disko.devices.zpool.tank2.datasets."dset2".type = "zfs_fs";
-  disko.devices.zpool.tank2.datasets."dset2/tier1".type = "zfs_fs";
-  disko.devices.zpool.tank2.datasets."dset2/tier2".type = "zfs_fs";
-  disko.devices.zpool.tank2.datasets."dset2/tier3".type = "zfs_fs";
-
-  disko.devices.zpool.tank2.datasets."dset2/tier1".options."com.sun:auto-snapshot" = "true";
-  disko.devices.zpool.tank2.datasets."dset2/tier3".options.sync = "disabled";
+  disko.devices.zpool.tank2.datasets."ds2".type = "zfs_fs";
+  disko.devices.zpool.tank2.datasets."ds2/tier1".type = "zfs_fs";
+  disko.devices.zpool.tank2.datasets."ds2/tier1".options."com.sun:auto-snapshot" = "true";
+  disko.devices.zpool.tank2.datasets."ds2/tier2".type = "zfs_fs";
+  disko.devices.zpool.tank2.datasets."ds2/tier3".type = "zfs_fs";
+  disko.devices.zpool.tank2.datasets."ds2/tier3".options.sync = "disabled";
 
   # ---
 
   # https://grahamc.com/blog/erase-your-darlings/
 
-  disko.devices.zpool.tank1.datasets."dset1/tier2/root" = {
+  disko.devices.zpool.tank1.datasets."ds1/tier2/root" = {
     type = "zfs_fs";
     options.mountpoint = "legacy";
     mountpoint = "/";
-    postCreateHook = "zfs snapshot tank1/dset1/tier2/root@blank";
+    postCreateHook = "zfs snapshot tank1/ds1/tier2/root@blank";
   };
 
   boot.initrd.systemd.services.zfs-rollback-root = {
@@ -171,24 +169,24 @@
     unitConfig.DefaultDependencies = "no";
     serviceConfig.Type = "oneshot";
     path = [ config.boot.zfs.package ];
-    script = "zfs rollback -r tank1/dset1/tier2/root@blank";
+    script = "zfs rollback -r tank1/ds1/tier2/root@blank";
   };
 
-  disko.devices.zpool.tank1.datasets."dset1/tier2/nix" = {
+  disko.devices.zpool.tank1.datasets."ds1/tier2/nix" = {
     type = "zfs_fs";
     options.mountpoint = "legacy";
     options.atime = "off";
     mountpoint = "/nix";
   };
 
-  disko.devices.zpool.tank1.datasets."dset1/tier1/safe" = {
-    # example: dset1/tier1/safe/etc/wireguard, .....
+  disko.devices.zpool.tank1.datasets."ds1/tier1/safe" = {
+    # example: tank1/ds1/tier1/safe/etc/wireguard, .....
     type = "zfs_fs";
     options.mountpoint = "legacy";
     mountpoint = "/+";
   };
 
-  disko.devices.zpool.tank1.datasets."dset1/tier1/home" = {
+  disko.devices.zpool.tank1.datasets."ds1/tier1/home" = {
     type = "zfs_fs";
     options.mountpoint = "legacy";
     mountpoint = "/home";

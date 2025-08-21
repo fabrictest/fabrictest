@@ -67,14 +67,17 @@ let
           [
             (lib.mapCartesianProduct (
               { record, server }:
-              lib.nameValuePair "${server}_${record.type}" {
-                inherit zone_id;
-                inherit (record) name;
-                comment = "Mail eXchanger host #${server} (${record.type})";
-                content = "aspmx${server}.migadu.com";
-                priority = 10 * (lib.toInt server);
-                ttl = 1;
-                type = "MX";
+              {
+                name = "${server}_${record.type}";
+                value = {
+                  inherit zone_id;
+                  inherit (record) name;
+                  comment = "Mail eXchanger host #${server} (${record.type})";
+                  content = "aspmx${server}.migadu.com";
+                  priority = 10 * (lib.toInt server);
+                  ttl = 1;
+                  type = "MX";
+                };
               }
             ))
             lib.listToAttrs
@@ -92,14 +95,17 @@ let
           [
             (lib.mapCartesianProduct (
               { server }:
-              lib.nameValuePair server {
-                inherit zone_id;
-                type = "CNAME";
-                name = "key${server}._domainkey.${name}";
-                content = "key${server}.${name}._domainkey.migadu.com";
-                ttl = 1;
-                proxied = false;
-                comment = "DKIM+ARC key #${server}";
+              {
+                name = server;
+                value = {
+                  inherit zone_id;
+                  type = "CNAME";
+                  name = "key${server}._domainkey.${name}";
+                  content = "key${server}.${name}._domainkey.migadu.com";
+                  ttl = 1;
+                  proxied = false;
+                  comment = "DKIM+ARC key #${server}";
+                };
               }
             ))
             lib.listToAttrs
@@ -213,11 +219,11 @@ let
       lib.mergeAttrsList
     ];
 
-  domainModule =
+  domainSubmodule =
     {
       alias ? false,
     }:
-    {
+    lib.types.submodule {
       options = {
         verification = lib.mkOption {
           description = "TODO TODO TODO TODO TODO";
@@ -234,22 +240,20 @@ let
       // lib.optionalAttrs (!alias) {
         alias = lib.mkOption {
           description = "TODO";
-          type = lib.types.attrsOf (
-            lib.types.submodule (domainModule {
-              alias = true;
-            })
-          );
+          type = lib.types.attrsOf (domainSubmodule {
+            alias = true;
+          });
           default = { };
         };
         mailbox = lib.mkOption {
           description = "TODO";
-          type = lib.types.attrsOf (lib.types.submodule mailboxModule);
+          type = lib.types.attrsOf mailboxSubmodule;
           default = { };
         };
       };
     };
 
-  mailboxModule = {
+  mailboxSubmodule = lib.types.submodule {
     options.name = lib.mkOption {
       description = "TODO";
       type = lib.types.nonEmptyStr;
@@ -273,16 +277,15 @@ in
     type = lib.types.submodule (
       { config, ... }:
       {
-        options.domain = lib.mkOption {
-          description = "TODO";
-          type = lib.types.attrsOf (lib.types.submodule (domainModule { }));
-          default = { };
-        };
         options.enable = lib.mkOption {
           description = "TODO";
           type = lib.types.bool;
-          readOnly = true;
           default = config.domain != { };
+        };
+        options.domain = lib.mkOption {
+          description = "TODO";
+          type = lib.types.attrsOf (domainSubmodule { });
+          default = { };
         };
         options._domain = lib.mkOption {
           internal = true;
@@ -308,9 +311,11 @@ in
   config.resource.cloudflare_zone = mkIfEnabled (
     lib.mapAttrs' (name: _: {
       name = slugify name;
-      value.account.id = config.tf.remote_state.accounts_cloudflare.output.id;
-      value.name = name;
-      value.type = "full";
+      value = {
+        account.id = config.tf.remote_state.accounts_cloudflare.output.id;
+        inherit name;
+        type = "full";
+      };
     }) cfg._domain
   );
 
@@ -343,16 +348,19 @@ in
           let
             slug = slugify2 domain user;
           in
-          lib.nameValuePair slug {
-            domain_name = domain;
-            local_part = user;
-            inherit name;
-            password = lib.tfRef "random_password.${slug}.result";
-            may_access_imap = true;
-            may_access_manage_sieve = true;
-            may_access_pop3 = true;
-            may_send = true;
-            may_receive = true;
+          {
+            name = slug;
+            value = {
+              domain_name = domain;
+              local_part = user;
+              inherit name;
+              password = lib.tfRef "random_password.${slug}.result";
+              may_access_imap = true;
+              may_access_manage_sieve = true;
+              may_access_pop3 = true;
+              may_send = true;
+              may_receive = true;
+            };
           }
         )
       ))
@@ -368,9 +376,11 @@ in
         lib.mapAttrs' (
           user: _: {
             name = slugify2 domain user;
-            value.keepers.domain_name = domain;
-            value.keepers.local_part = user;
-            value.length = 64;
+            value = {
+              keepers.domain_name = domain;
+              keepers.local_part = user;
+              length = 64;
+            };
           }
         )
       ))
@@ -391,13 +401,15 @@ in
           { domain, alias }:
           {
             name = slugify2 domain alias;
-            value.domain_name = domain;
-            value.local_part = alias;
-            value.destinations =
-              if lib.elem alias adminAliases then
-                adminAddrs.${domain}
-              else
-                lib.map (emailify domain) adminAliases;
+            value = {
+              domain_name = domain;
+              local_part = alias;
+              destinations =
+                if lib.elem alias adminAliases then
+                  adminAddrs.${domain}
+                else
+                  lib.map (emailify domain) adminAliases;
+            };
           }
         ))
         lib.listToAttrs

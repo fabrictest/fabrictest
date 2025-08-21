@@ -2,14 +2,14 @@
   inputs,
   lib,
   pkgs,
-  system,
   ...
 }:
-let
-  root = lib.readFile inputs.devenv-root.outPath;
-in
 {
-  devenv.root = lib.mkIf (root != "") root;
+  devenv.root =
+    let
+      root = lib.readFile inputs.devenv-root.outPath;
+    in
+    lib.mkIf (root != "") root;
 
   name = "fabrictest";
 
@@ -34,7 +34,7 @@ in
     ]))
     pkgs.terranix
 
-    inputs.clan-core.packages.${system}.clan-cli
+    inputs.clan-core.packages.${pkgs.system}.clan-cli
 
     # Zed
     pkgs.nil

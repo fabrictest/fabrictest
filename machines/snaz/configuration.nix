@@ -17,4 +17,18 @@
     noCheck = true;
     options = [ "bind" ];
   };
+
+  fileSystems."/var/lib/samba" = {
+    device = "/+/var/lib/samba";
+    options = [
+      "bind"
+      "noauto"
+      "x-systemd.automount"
+    ];
+  };
+
+  systemd.tmpfiles.settings."10-samba-usershares"."/var/lib/samba/usershares".d = {
+    mode = "1770";
+    inherit (config.services.samba.usershares) group;
+  };
 }
