@@ -191,4 +191,9 @@
     options.mountpoint = "legacy";
     mountpoint = "/home";
   };
+
+  disko.devices.zpool.tank2.datasets."ds2/tier1/media" = {
+    type = "zfs_fs";
+    options.sharesmb = "on";
+  };
 }

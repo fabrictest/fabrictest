@@ -31,4 +31,15 @@
     mode = "1770";
     inherit (config.services.samba.usershares) group;
   };
+
+  services.samba = {
+    enable = true;
+    openFirewall = true;
+    settings = {
+      "usershare allow guests" = "yes";
+      "usershare max shares" = "99";
+      "usershare owner only" = "no";
+      "usershare path" = "/var/lib/samba/usershares";
+    };
+  };
 }

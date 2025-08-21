@@ -3,6 +3,7 @@
   meta.description = "tautologicc's darknet";
 
   inventory.machines.snaz = {
+    tags = [ "office" ];
     deploy.targetHost = "root@192.168.100.173";
   };
 
@@ -22,5 +23,12 @@
 
   inventory.instances.emergency-access = {
     roles.default.tags.nixos = { };
+  };
+
+  inventory.instances.wifi = {
+    roles.default.tags.office = { };
+    roles.default.settings = {
+      networks."FloraCastle" = { };
+    };
   };
 }
