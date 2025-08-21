@@ -85,7 +85,7 @@
     };
   };
 
-  disko.devices.disk.tank2-cash1 = {
+  disko.devices.disk.tank2-cache1 = {
     type = "disk";
     device = "/dev/disk/by-id/nvme-eui.0000000001000000e4d25c99626e5201";
     content.type = "gpt";
@@ -98,7 +98,7 @@
 
   disko.devices.zpool.tank2 = {
     type = "zpool";
-    mode.topology.cache = [ "tank2-cash1" ];
+    mode.topology.cache = [ "tank2-cache1" ];
     mode.topology.vdev = [
       {
         mode = "raidz1";
