@@ -1,6 +1,7 @@
 { config, ... }:
 {
-  disko.devices.disk.tank1-disk1 = {
+  disko.devices.disk.tank1-solid1 = {
+    type = "disk";
     device = "/dev/disk/by-id/wwn-0x50014ee606173089";
     content.type = "gpt";
     content.partitions.ESP = {
@@ -19,9 +20,10 @@
   };
 
   disko.devices.zpool.tank1 = {
+    type = "zpool";
     mode.topology.vdev = [
       {
-        members = [ "tank1-disk1" ];
+        members = [ "tank1-solid1" ];
       }
     ];
     options = {
@@ -50,7 +52,8 @@
 
   # ---
 
-  disko.devices.disk.tank2-disk1 = {
+  disko.devices.disk.tank2-rust1 = {
+    type = "disk";
     device = "/dev/disk/by-id/wwn-0x5000c500e763eac4";
     content.type = "gpt";
     content.partitions.zfs = {
@@ -60,7 +63,8 @@
     };
   };
 
-  disko.devices.disk.tank2-disk2 = {
+  disko.devices.disk.tank2-rust2 = {
+    type = "disk";
     device = "/dev/disk/by-id/wwn-0x5000c500e76ca082";
     content.type = "gpt";
     content.partitions.zfs = {
@@ -70,7 +74,8 @@
     };
   };
 
-  disko.devices.disk.tank2-disk3 = {
+  disko.devices.disk.tank2-rust3 = {
+    type = "disk";
     device = "/dev/disk/by-id/wwn-0x5000c500e76cbc61";
     content.type = "gpt";
     content.partitions.zfs = {
@@ -81,6 +86,7 @@
   };
 
   disko.devices.disk.tank2-cash1 = {
+    type = "disk";
     device = "/dev/disk/by-id/nvme-eui.0000000001000000e4d25c99626e5201";
     content.type = "gpt";
     content.partitions.zfs = {
@@ -91,23 +97,22 @@
   };
 
   disko.devices.zpool.tank2 = {
+    type = "zpool";
     mode.topology.cache = [ "tank2-cash1" ];
     mode.topology.vdev = [
       {
         mode = "raidz1";
         members = [
-          "tank2-disk1"
-          "tank2-disk2"
-          "tank2-disk3"
+          "tank2-rust1"
+          "tank2-rust2"
+          "tank2-rust3"
         ];
       }
     ];
-
     options = {
       ashift = "12";
       autotrim = "on";
     };
-
     rootFsOptions = {
       acltype = "posixacl";
       atime = "on";
