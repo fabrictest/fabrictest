@@ -1,6 +1,6 @@
-{ config, ... }:
+{ config, pkgs, ... }:
 {
-  disko.devices.disk.tank1-solid1 = {
+  disko.devices.disk.tank1-disk1 = {
     type = "disk";
     device = "/dev/disk/by-id/wwn-0x50014ee606173089";
     content.type = "gpt";
@@ -21,11 +21,14 @@
 
   disko.devices.zpool.tank1 = {
     type = "zpool";
-    mode.topology.vdev = [
-      {
-        members = [ "tank1-solid1" ];
-      }
-    ];
+    mode.topology = {
+      type = "topology";
+      vdev = [
+        {
+          members = [ "tank1-disk1" ];
+        }
+      ];
+    };
     options = {
       ashift = "12";
       autotrim = "on";
@@ -52,7 +55,7 @@
 
   # ---
 
-  disko.devices.disk.tank2-rust1 = {
+  disko.devices.disk.tank2-disk1 = {
     type = "disk";
     device = "/dev/disk/by-id/wwn-0x5000c500e763eac4";
     content.type = "gpt";
@@ -63,7 +66,7 @@
     };
   };
 
-  disko.devices.disk.tank2-rust2 = {
+  disko.devices.disk.tank2-disk2 = {
     type = "disk";
     device = "/dev/disk/by-id/wwn-0x5000c500e76ca082";
     content.type = "gpt";
@@ -74,7 +77,7 @@
     };
   };
 
-  disko.devices.disk.tank2-rust3 = {
+  disko.devices.disk.tank2-disk3 = {
     type = "disk";
     device = "/dev/disk/by-id/wwn-0x5000c500e76cbc61";
     content.type = "gpt";
@@ -96,19 +99,33 @@
     };
   };
 
+  clan.core.vars.generators.zpool-tank2 = {
+    files.keyfile = {
+      mode = "0000";
+      neededFor = "partitioning";
+    };
+    runtimeInputs = [ pkgs.coreutils ];
+    script = ''
+      dd if=/dev/urandom bs=32 count=1 of="$out/keyfile"
+    '';
+  };
+
   disko.devices.zpool.tank2 = {
     type = "zpool";
-    mode.topology.cache = [ "tank2-cache1" ];
-    mode.topology.vdev = [
-      {
-        mode = "raidz1";
-        members = [
-          "tank2-rust1"
-          "tank2-rust2"
-          "tank2-rust3"
-        ];
-      }
-    ];
+    mode.topology = {
+      type = "topology";
+      cache = [ "tank2-cache1" ];
+      vdev = [
+        {
+          mode = "raidz1";
+          members = [
+            "tank2-disk1"
+            "tank2-disk2"
+            "tank2-disk3"
+          ];
+        }
+      ];
+    };
     options = {
       ashift = "12";
       autotrim = "on";
@@ -121,9 +138,8 @@
       compression = "on";
       dnodesize = "auto";
       encryption = "on";
-      # FIXME(eff): Switch to client certificate authZ. https://github.com/Micinek/zfs-encryption
-      keyformat = "passphrase";
-      keylocation = "prompt";
+      keyformat = "raw";
+      keylocation = "file://${config.clan.core.vars.generators.zpool-tank2.files.keyfile.path}";
       mountpoint = "none";
       normalization = "formD";
       relatime = "on";

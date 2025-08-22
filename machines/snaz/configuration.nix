@@ -3,7 +3,10 @@
   clan.core.settings.state-version.enable = true;
 
   clan.core.settings.machine-id.enable = true;
-  networking.hostId = lib.substring 0 8 config.clan.core.settings.machine-id.files.machineId.value;
+
+  networking.hostId =
+    lib.substring 0 8
+      config.clan.core.vars.generators.machine-id.files.machineId.value;
 
   boot.loader.efi.canTouchEfiVariables = true;
   boot.loader.systemd-boot.enable = true;
@@ -37,10 +40,13 @@
     enable = true;
     openFirewall = true;
     settings = {
-      "usershare allow guests" = "yes";
-      "usershare max shares" = "99";
-      "usershare owner only" = "no";
-      "usershare path" = "/var/lib/samba/usershares";
+      global = {
+        "server smb encrypt" = "required";
+        "usershare allow guests" = "yes";
+        "usershare max shares" = "99";
+        "usershare owner only" = "no";
+        "usershare path" = "/var/lib/samba/usershares";
+      };
     };
   };
 }

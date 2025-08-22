@@ -3,7 +3,7 @@
   meta.description = "tautologicc's darknet";
 
   inventory.machines.snaz = {
-    tags = [ "office" ];
+    tags = [ "local" ];
     deploy.targetHost = "root@192.168.100.173";
   };
 
@@ -15,9 +15,7 @@
           "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEI496sUFzVECzwdbjWFPwEyGp8tA6OuXKS3qedUXRnF";
         "eff@snaz" = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIONucbKwW3mhpLJmWpl2Z9oEH13jldnCeopjwn4u4koV";
       };
-      certificateSearchDomains = [
-        "fabricte.st"
-      ];
+      certificateSearchDomains = [ "fabricte.st" ];
     };
   };
 
@@ -25,10 +23,19 @@
     roles.default.tags.nixos = { };
   };
 
+  inventory.instances.sshd =
+    let
+      certificate.searchDomains = [ "fabricte.st" ];
+    in
+    {
+      roles.client.tags.all = { inherit certificate; };
+      roles.server.tags.all = { inherit certificate; };
+    };
+
   inventory.instances.wifi = {
-    roles.default.tags.office = { };
+    roles.default.tags.local = { };
     roles.default.settings = {
-      networks.office = { };
+      networks.local = { };
     };
   };
 }
