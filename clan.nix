@@ -1,4 +1,3 @@
-{ ... }:
 {
   meta.name = "fabrictest";
   meta.description = "tautologicc's darknet";
@@ -35,12 +34,10 @@
       roles.server.settings = { inherit certificate; };
     };
 
-  /*
-    inventory.instances.wifi = {
-      roles.default.tags.local = { };
-      roles.default.settings = {
-        networks.local = { };
-      };
+  inventory.instances.wifi = {
+    roles.default.tags.local = { };
+    roles.default.settings = {
+      networks.omada = { };
     };
-  */
+  };
 }

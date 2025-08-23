@@ -31,13 +31,10 @@
     ];
   };
 
-  systemd.tmpfiles.settings."10-samba-usershares".${
-    config.services.samba.settings.global."usershare path"
-  }.d =
-    {
-      mode = "1770";
-      inherit (config.services.samba.usershares) group;
-    };
+  systemd.tmpfiles.settings."10-samba-usershares"."/var/lib/samba/usershares".d = {
+    mode = "1770";
+    inherit (config.services.samba.usershares) group;
+  };
 
   services.samba = {
     enable = true;
