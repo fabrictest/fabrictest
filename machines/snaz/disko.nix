@@ -113,7 +113,8 @@
 
   disko.devices.disk.tank2-cache1 = {
     type = "disk";
-    device = "/dev/disk/by-id/nvme-eui.0000000001000000e4d25c99626e5201";
+    # device = "/dev/disk/by-id/nvme-eui.0000000001000000e4d25c99626e5201";
+    device = "/dev/disk/by-id/nvme-eui.5cd2e499626e0100";
     content.type = "gpt";
     content.partitions.zfs = {
       size = "100%";
