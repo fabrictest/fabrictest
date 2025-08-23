@@ -1,4 +1,8 @@
-{ config, pkgs, ... }:
+{
+  config,
+  pkgs,
+  ...
+}:
 {
   disko.devices.disk.tank1-disk1 = {
     type = "disk";
@@ -43,7 +47,7 @@
       encryption = "on";
       # FIXME(eff): Switch to client certificate authZ. https://github.com/Micinek/zfs-encryption
       keyformat = "passphrase";
-      keylocation = "prompt";
+      keylocation = "file://${config.clan.core.vars.generators."zfs.tank1".files.passphrase.path}";
       mountpoint = "none";
       normalization = "formD";
       relatime = "on";
@@ -51,6 +55,22 @@
       xattr = "sa";
       "com.sun:auto-snapshot" = "false";
     };
+  };
+
+  clan.core.vars.generators."zfs.tank1" = {
+    files.passphrase.deploy = false;
+    prompts.passphrase.type = "hidden";
+    prompts.passphrase.persist = true;
+    prompts.passphrase.description = "Leave empty to generate automatically";
+    runtimeInputs = [
+      pkgs.coreutils
+      pkgs.xkcdpass
+    ];
+    script = ''
+      tr -d '\n' <"$prompts"/passphrase >"$out"/passphrase
+      test -s "$out"/passphrase ||
+        xkcdpass --numwords 3 --delimiter - --count 1 | tr -d '\n' >"$out"/passphrase
+    '';
   };
 
   # ---
@@ -99,17 +119,6 @@
     };
   };
 
-  clan.core.vars.generators.zpool-tank2 = {
-    files.keyfile = {
-      mode = "0000";
-      neededFor = "partitioning";
-    };
-    runtimeInputs = [ pkgs.coreutils ];
-    script = ''
-      dd if=/dev/urandom bs=32 count=1 of="$out/keyfile"
-    '';
-  };
-
   disko.devices.zpool.tank2 = {
     type = "zpool";
     mode.topology = {
@@ -138,8 +147,8 @@
       compression = "on";
       dnodesize = "auto";
       encryption = "on";
-      keyformat = "raw";
-      keylocation = "file://${config.clan.core.vars.generators.zpool-tank2.files.keyfile.path}";
+      keyformat = "hex";
+      keylocation = "file://${config.clan.core.vars.generators."zfs.tank2".files.keyfile.path}";
       mountpoint = "none";
       normalization = "formD";
       relatime = "on";
@@ -147,6 +156,14 @@
       xattr = "sa";
       "com.sun:auto-snapshot" = "false";
     };
+  };
+
+  clan.core.vars.generators."zfs.tank2" = {
+    files.keyfile.neededFor = "partitioning";
+    runtimeInputs = [ pkgs.coreutils ];
+    script = ''
+      od -x -An -N32 -w64 /dev/urandom | tr -d '[:blank:]' >"$out/keyfile"
+    '';
   };
 
   # ---
