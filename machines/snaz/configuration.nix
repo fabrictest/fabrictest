@@ -31,22 +31,24 @@
     ];
   };
 
-  systemd.tmpfiles.settings."10-samba-usershares"."/var/lib/samba/usershares".d = {
-    mode = "1770";
-    inherit (config.services.samba.usershares) group;
-  };
+  systemd.tmpfiles.settings."10-samba-usershares".${
+    config.services.samba.settings.global."usershare path"
+  }.d =
+    {
+      mode = "1770";
+      inherit (config.services.samba.usershares) group;
+    };
 
   services.samba = {
     enable = true;
     openFirewall = true;
-    settings = {
-      global = {
-        "server smb encrypt" = "required";
-        "usershare allow guests" = "yes";
-        "usershare max shares" = "99";
-        "usershare owner only" = "no";
-        "usershare path" = "/var/lib/samba/usershares";
-      };
+    settings.global = {
+      # TODO(eff): Set "ftp" user as guest account instead of "nobody".
+      "server smb encrypt" = "required";
+      "usershare allow guests" = "yes";
+      "usershare max shares" = "99";
+      "usershare owner only" = "no";
+      "usershare path" = "/var/lib/samba/usershares";
     };
   };
 }

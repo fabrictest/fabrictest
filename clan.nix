@@ -1,10 +1,11 @@
+{ ... }:
 {
   meta.name = "fabrictest";
   meta.description = "tautologicc's darknet";
 
   inventory.machines.snaz = {
     tags = [ "local" ];
-    deploy.targetHost = "root@192.168.100.173";
+    deploy.targetHost = "root@192.168.100.121";
   };
 
   inventory.instances.admin = {
@@ -28,8 +29,10 @@
       certificate.searchDomains = [ "fabricte.st" ];
     in
     {
-      roles.client.tags.all = { inherit certificate; };
-      roles.server.tags.all = { inherit certificate; };
+      roles.client.tags.all = { };
+      roles.client.settings = { inherit certificate; };
+      roles.server.tags.all = { };
+      roles.server.settings = { inherit certificate; };
     };
 
   /*
