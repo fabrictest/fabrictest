@@ -55,10 +55,13 @@
       xattr = "sa";
       "com.sun:auto-snapshot" = "false";
     };
+    postCreateHook = ''
+      zfs set keylocation=prompt tank1
+    '';
   };
 
   clan.core.vars.generators."zfs.tank1" = {
-    files.passphrase.deploy = false;
+    files.passphrase.neededFor = "partitioning";
     prompts.passphrase.type = "hidden";
     prompts.passphrase.persist = true;
     prompts.passphrase.description = "Leave empty to generate automatically";
@@ -196,7 +199,10 @@
     type = "zfs_fs";
     options.mountpoint = "legacy";
     mountpoint = "/";
-    postCreateHook = "zfs snapshot tank1/ds1/tier2/root@blank";
+    postCreateHook = ''
+      zfs list -t snapshot -H -o name | grep -E '^tank1/ds1/tier2/root@blank$' ||
+        zfs snapshot tank1/ds1/tier2/root@blank
+    '';
   };
 
   boot.initrd.systemd.services.zfs-rollback-root = {
