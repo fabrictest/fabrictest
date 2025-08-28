@@ -17,7 +17,7 @@
   ];
 
   inputs.clan-core = {
-    url = "github:clan-lol/clan-core";
+    url = "https://git.clan.lol/clan/clan-core/archive/main.tar.gz";
     inputs.flake-parts.follows = "flake-parts";
     inputs.nixpkgs.follows = "nixpkgs";
     inputs.systems.follows = "systems";
@@ -26,8 +26,7 @@
   inputs.devenv = {
     url = "github:cachix/devenv";
     inputs.nixpkgs.follows = "nixpkgs";
-    # FIXME(eff): This construct is broken. https://github.com/DeterminateSystems/nix-src/issues/95
-    # inputs.git-hooks.inputs.flake-parts.follows = "flake-parts";
+    inputs.git-hooks.inputs.flake-parts.follows = "flake-parts";
   };
 
   # NOTE(eff): url is overridden in .envrc.

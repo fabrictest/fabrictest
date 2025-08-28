@@ -1,9 +1,4 @@
 {
-  config,
-  pkgs,
-  ...
-}:
-{
   disko.devices.disk.tank1-disk1 = {
     type = "disk";
     device = "/dev/disk/by-id/wwn-0x50014ee606173089";
@@ -25,58 +20,76 @@
 
   disko.devices.zpool.tank1 = {
     type = "zpool";
-    mode.topology = {
-      type = "topology";
-      vdev = [
-        {
-          members = [ "tank1-disk1" ];
-        }
-      ];
-    };
-    options = {
-      ashift = "12";
-      autotrim = "on";
-    };
-    rootFsOptions = {
-      acltype = "posixacl";
-      atime = "on";
-      canmount = "off";
-      checksum = "blake3";
-      compression = "on";
-      dnodesize = "auto";
-      encryption = "on";
-      # FIXME(eff): Switch to client certificate authZ. https://github.com/Micinek/zfs-encryption
-      keyformat = "passphrase";
-      keylocation = "file://${config.clan.core.vars.generators."zfs.tank1".files.passphrase.path}";
-      mountpoint = "none";
-      normalization = "formD";
-      relatime = "on";
-      utf8only = "on";
-      xattr = "sa";
-      "com.sun:auto-snapshot" = "false";
-    };
-    postCreateHook = ''
-      zfs set keylocation=prompt tank1
-    '';
-  };
-
-  clan.core.vars.generators."zfs.tank1" = {
-    files.passphrase.neededFor = "partitioning";
-    prompts.passphrase.type = "hidden";
-    prompts.passphrase.persist = true;
-    prompts.passphrase.description = "Leave empty to generate automatically";
-    runtimeInputs = [
-      pkgs.coreutils
-      pkgs.xkcdpass
+    mode.topology.type = "topology";
+    mode.topology.vdev = [
+      {
+        members = [ "tank1-disk1" ];
+      }
     ];
-    script = ''
-      tr -d '\n' <"$prompts"/passphrase >"$out"/passphrase
-      test -s "$out"/passphrase ||
-        xkcdpass --numwords 3 --delimiter - --count 1 | tr -d '\n' >"$out"/passphrase
-    '';
-  };
+    options.ashift = "12";
+    options.autotrim = "on";
+    rootFsOptions.acltype = "posixacl";
+    rootFsOptions.atime = "on";
+    rootFsOptions.canmount = "off";
+    rootFsOptions.checksum = "blake3";
+    rootFsOptions.compression = "on";
+    rootFsOptions.dnodesize = "auto";
+    rootFsOptions.encryption = "on";
+    # FIXME(eff): Switch to client certificate authZ. https://github.com/Micinek/zfs-encryption
+    rootFsOptions.keyformat = "passphrase";
+    rootFsOptions.keylocation = "prompt";
+    rootFsOptions.mountpoint = "none";
+    rootFsOptions.normalization = "formD";
+    rootFsOptions.relatime = "on";
+    rootFsOptions.utf8only = "on";
+    rootFsOptions.xattr = "sa";
+    rootFsOptions."com.sun:auto-snapshot" = "false";
 
-  # ---
+    # https://b3n.org/zfs-hierarchy/
+
+    datasets.ds1.type = "zfs_fs";
+
+    # tier1: MUST backup
+    # tier2: just persistence between reboots, no backup
+    # tier3: temporary, expendable storage, very fast, good for e.g. downloads and video encoding
+
+    datasets."ds1/tier1" = {
+      type = "zfs_fs";
+      options."com.sun:auto-snapshot" = "true";
+    };
+    datasets."ds1/tier2" = {
+      type = "zfs_fs";
+    };
+    datasets."ds1/tier3" = {
+      type = "zfs_fs";
+      options.sync = "disabled";
+    };
+
+    datasets."ds1/tier2/root" = {
+      type = "zfs_fs";
+      mountpoint = "/";
+      options.mountpoint = "legacy";
+      # https://grahamc.com/blog/erase-your-darlings/
+      postCreateHook = "zfs snapshot tank1/$name@blank";
+      postMountHook = "zfs rollback -r tank1/$name@blank";
+    };
+    datasets."ds1/tier1/root" = {
+      type = "zfs_fs";
+      mountpoint = "/persist";
+      options.mountpoint = "legacy";
+    };
+    datasets."ds1/tier2/nix" = {
+      type = "zfs_fs";
+      mountpoint = "/nix";
+      options.mountpoint = "legacy";
+      options.atime = "off";
+    };
+    datasets."ds1/tier1/home" = {
+      type = "zfs_fs";
+      mountpoint = "/home";
+      options.mountpoint = "legacy";
+    };
+  };
 
   disko.devices.disk.tank2-disk1 = {
     type = "disk";
@@ -124,120 +137,56 @@
 
   disko.devices.zpool.tank2 = {
     type = "zpool";
-    mode.topology = {
-      type = "topology";
-      cache = [ "tank2-cache1" ];
-      vdev = [
-        {
-          mode = "raidz1";
-          members = [
-            "tank2-disk1"
-            "tank2-disk2"
-            "tank2-disk3"
-          ];
-        }
-      ];
+    mode.topology.type = "topology";
+    mode.topology.cache = [
+      "tank2-cache1"
+    ];
+    mode.topology.vdev = [
+      {
+        mode = "raidz1";
+        members = [
+          "tank2-disk1"
+          "tank2-disk2"
+          "tank2-disk3"
+        ];
+      }
+    ];
+    options.ashift = "12";
+    options.autotrim = "on";
+    rootFsOptions.acltype = "posixacl";
+    rootFsOptions.atime = "on";
+    rootFsOptions.canmount = "off";
+    rootFsOptions.checksum = "blake3";
+    rootFsOptions.compression = "on";
+    rootFsOptions.dnodesize = "auto";
+    rootFsOptions.encryption = "on";
+    rootFsOptions.keyformat = "passphrase";
+    rootFsOptions.keylocation = "prompt";
+    rootFsOptions.mountpoint = "none";
+    rootFsOptions.normalization = "formD";
+    rootFsOptions.relatime = "on";
+    rootFsOptions.utf8only = "on";
+    rootFsOptions.xattr = "sa";
+    rootFsOptions."com.sun:auto-snapshot" = "false";
+
+    datasets.ds2.type = "zfs_fs";
+
+    datasets."ds2/tier1" = {
+      type = "zfs_fs";
+      options."com.sun:auto-snapshot" = "true";
     };
-    options = {
-      ashift = "12";
-      autotrim = "on";
+    datasets."ds2/tier2" = {
+      type = "zfs_fs";
     };
-    rootFsOptions = {
-      acltype = "posixacl";
-      atime = "on";
-      canmount = "off";
-      checksum = "blake3";
-      compression = "on";
-      dnodesize = "auto";
-      encryption = "on";
-      keyformat = "hex";
-      keylocation = "file://${config.clan.core.vars.generators."zfs.tank2".files.keyfile.path}";
-      mountpoint = "none";
-      normalization = "formD";
-      relatime = "on";
-      utf8only = "on";
-      xattr = "sa";
-      "com.sun:auto-snapshot" = "false";
+    datasets."ds2/tier3" = {
+      type = "zfs_fs";
+      options.sync = "disabled";
     };
-  };
 
-  clan.core.vars.generators."zfs.tank2" = {
-    files.keyfile.neededFor = "partitioning";
-    runtimeInputs = [ pkgs.coreutils ];
-    script = ''
-      od -x -An -N32 -w64 /dev/urandom | tr -d '[:blank:]' >"$out/keyfile"
-    '';
-  };
-
-  # ---
-
-  # https://b3n.org/zfs-hierarchy/
-
-  # tier1: MUST backup
-  # tier2: just persistence between reboots, no backup
-  # tier3: temporary, expendable storage, very fast, good for e.g. downloads and video encoding
-
-  disko.devices.zpool.tank1.datasets."ds1".type = "zfs_fs";
-  disko.devices.zpool.tank1.datasets."ds1/tier1".type = "zfs_fs";
-  disko.devices.zpool.tank1.datasets."ds1/tier1".options."com.sun:auto-snapshot" = "true";
-  disko.devices.zpool.tank1.datasets."ds1/tier2".type = "zfs_fs";
-  disko.devices.zpool.tank1.datasets."ds1/tier3".type = "zfs_fs";
-  disko.devices.zpool.tank1.datasets."ds1/tier3".options.sync = "disabled";
-
-  disko.devices.zpool.tank2.datasets."ds2".type = "zfs_fs";
-  disko.devices.zpool.tank2.datasets."ds2/tier1".type = "zfs_fs";
-  disko.devices.zpool.tank2.datasets."ds2/tier1".options."com.sun:auto-snapshot" = "true";
-  disko.devices.zpool.tank2.datasets."ds2/tier2".type = "zfs_fs";
-  disko.devices.zpool.tank2.datasets."ds2/tier3".type = "zfs_fs";
-  disko.devices.zpool.tank2.datasets."ds2/tier3".options.sync = "disabled";
-
-  # ---
-
-  # https://grahamc.com/blog/erase-your-darlings/
-
-  disko.devices.zpool.tank1.datasets."ds1/tier2/root" = {
-    type = "zfs_fs";
-    options.mountpoint = "legacy";
-    mountpoint = "/";
-    postCreateHook = ''
-      zfs list -t snapshot -H -o name | grep -E '^tank1/ds1/tier2/root@blank$' ||
-        zfs snapshot tank1/ds1/tier2/root@blank
-    '';
-  };
-
-  boot.initrd.systemd.services.zfs-rollback-root = {
-    description = "Rollback root filesystem to a pristine state";
-    wantedBy = [ "initrd.target" ];
-    after = [ "zfs-import-tank1.service" ];
-    before = [ "sysroot.mount" ];
-    unitConfig.DefaultDependencies = "no";
-    serviceConfig.Type = "oneshot";
-    path = [ config.boot.zfs.package ];
-    script = "zfs rollback -r tank1/ds1/tier2/root@blank";
-  };
-
-  disko.devices.zpool.tank1.datasets."ds1/tier2/nix" = {
-    type = "zfs_fs";
-    options.mountpoint = "legacy";
-    options.atime = "off";
-    mountpoint = "/nix";
-  };
-
-  disko.devices.zpool.tank1.datasets."ds1/tier1/safe" = {
-    # example: /etc/wireguard -> /+/etc/wireguard, .....
-    type = "zfs_fs";
-    options.mountpoint = "legacy";
-    mountpoint = "/+";
-  };
-
-  disko.devices.zpool.tank1.datasets."ds1/tier1/home" = {
-    type = "zfs_fs";
-    options.mountpoint = "legacy";
-    mountpoint = "/home";
-  };
-
-  disko.devices.zpool.tank2.datasets."ds2/tier1/media" = {
-    type = "zfs_fs";
-    options.sharesmb = "on";
+    datasets."ds2/tier1/nas" = {
+      type = "zfs_fs";
+      mountpoint = "/nas";
+      options.mountpoint = "legacy";
+    };
   };
 }

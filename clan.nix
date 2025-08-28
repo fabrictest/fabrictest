@@ -7,6 +7,20 @@
     deploy.targetHost = "root@192.168.100.121";
   };
 
+  inventory.instances.me = {
+    module.name = "users";
+    roles.default.tags.all = { };
+    roles.default.settings = {
+      user = "tautologicc";
+      groups = [
+        "input"
+        "networkmanager"
+        "video"
+        "wheel"
+      ];
+    };
+  };
+
   inventory.instances.admin = {
     roles.default.tags.all = { };
     roles.default.settings = {
@@ -33,11 +47,4 @@
       roles.server.tags.all = { };
       roles.server.settings = { inherit certificate; };
     };
-
-  inventory.instances.wifi = {
-    roles.default.tags.local = { };
-    roles.default.settings = {
-      networks.omada = { };
-    };
-  };
 }
