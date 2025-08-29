@@ -1,28 +1,37 @@
-{ config, lib, ... }:
 {
-  clan.core.settings = {
-    machine-id.enable = true;
-    state-version.enable = true;
-  };
+  config,
+  inputs,
+  lib,
+  ...
+}:
+{
+  imports = [
+    inputs.determinate.nixosModules.default
+  ];
 
-  boot.zfs.extraPools = [ "tank2" ];
+  boot.loader.efi.canTouchEfiVariables = true;
+  boot.loader.systemd-boot.enable = true;
+
+  clan.core.settings.state-version.enable = true;
+
+  networking.domain = "fabricte.st";
+
+  clan.core.settings.machine-id.enable = true;
 
   networking.hostId =
     lib.substring 0 8
       config.clan.core.vars.generators.machine-id.files.machineId.value;
 
-  boot.loader.efi.canTouchEfiVariables = true;
-  boot.loader.systemd-boot.enable = true;
-
   networking.useNetworkd = true;
-  networking.domain = "fabricte.st";
 
-  services.zfs.autoSnapshot.flags = "-k -p --utc";
+  time.timeZone = "UTC";
 
   fileSystems."/var/lib/nixos" = {
     device = "/persist/var/lib/nixos";
     noCheck = true;
-    options = [ "bind" ];
+    options = [
+      "bind"
+    ];
   };
 
   fileSystems."/var/lib/samba" = {
