@@ -54,28 +54,25 @@
 
   outputs =
     inputs:
-    inputs.flake-parts.lib.mkFlake { inherit inputs; } (
-      { ... }:
-      {
-        imports = [
-          inputs.clan-core.flakeModules.default
-          inputs.devenv.flakeModules.default
-        ];
+    inputs.flake-parts.lib.mkFlake { inherit inputs; } {
+      imports = [
+        inputs.clan-core.flakeModules.default
+        inputs.devenv.flakeModules.default
+      ];
 
-        clan = ./clan.nix;
+      clan = ./clan.nix;
 
-        systems = import inputs.systems;
+      systems = import inputs.systems;
 
-        perSystem =
-          { system, ... }:
-          {
-            _module.args.pkgs = import inputs.nixpkgs {
-              inherit system;
-              config.allowUnfree = true;
-            };
-
-            devenv.shells.default = ./devenv.nix;
+      perSystem =
+        { system, ... }:
+        {
+          _module.args.pkgs = import inputs.nixpkgs {
+            inherit system;
+            config.allowUnfree = true;
           };
-      }
-    );
+
+          devenv.shells.default = ./devenv.nix;
+        };
+    };
 }
