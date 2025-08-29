@@ -29,9 +29,17 @@
   inputs.clan-core.inputs.flake-parts.follows = "flake-parts";
   inputs.clan-core.inputs.nixpkgs.follows = "nixpkgs";
   inputs.clan-core.inputs.systems.follows = "systems";
+
+  inputs.determinate.inputs.nix.inputs.flake-parts.follows = "nixpkgs";
+  inputs.determinate.inputs.nix.inputs.git-hooks-nix.follows = "devenv/git-hooks";
+  inputs.determinate.inputs.nix.inputs.nixpkgs.follows = "nixpkgs";
+  inputs.determinate.inputs.nixpkgs.follows = "nixpkgs";
+
   inputs.devenv.inputs.nixpkgs.follows = "nixpkgs";
   inputs.devenv.inputs.git-hooks.inputs.flake-parts.follows = "flake-parts";
+
   inputs.flake-parts.inputs.nixpkgs-lib.follows = "nixpkgs";
+
   inputs.nix2container.inputs.nixpkgs.follows = "nixpkgs";
 
   # NOTE(eff): url is overridden in .envrc.
