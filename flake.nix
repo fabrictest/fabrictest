@@ -22,6 +22,7 @@
   inputs.determinate.url = "https://flakehub.com/f/DeterminateSystems/determinate/*";
   inputs.devenv.url = "github:cachix/devenv";
   inputs.flake-parts.url = "https://flakehub.com/f/hercules-ci/flake-parts/*";
+  inputs.git-hooks.url = "https://flakehub.com/f/cachix/git-hooks.nix/*";
   inputs.mk-shell-bin.url = "github:rrbutani/nix-mk-shell-bin";
   inputs.nix2container.url = "github:nlewo/nix2container";
   inputs.nixpkgs.url = "https://flakehub.com/f/NixOS/nixpkgs/*";
@@ -30,15 +31,17 @@
   inputs.clan-core.inputs.nixpkgs.follows = "nixpkgs";
   inputs.clan-core.inputs.systems.follows = "systems";
 
-  inputs.determinate.inputs.nix.inputs.flake-parts.follows = "nixpkgs";
-  inputs.determinate.inputs.nix.inputs.git-hooks-nix.follows = "devenv/git-hooks";
+  inputs.devenv.inputs.git-hooks.follows = "git-hooks";
+  inputs.devenv.inputs.nixpkgs.follows = "nixpkgs";
+
+  inputs.determinate.inputs.nix.inputs.flake-parts.follows = "flake-parts";
+  inputs.determinate.inputs.nix.inputs.git-hooks-nix.follows = "git-hooks";
   inputs.determinate.inputs.nix.inputs.nixpkgs.follows = "nixpkgs";
   inputs.determinate.inputs.nixpkgs.follows = "nixpkgs";
 
-  inputs.devenv.inputs.nixpkgs.follows = "nixpkgs";
-  inputs.devenv.inputs.git-hooks.inputs.flake-parts.follows = "flake-parts";
-
   inputs.flake-parts.inputs.nixpkgs-lib.follows = "nixpkgs";
+
+  inputs.git-hooks.inputs.nixpkgs.follows = "nixpkgs";
 
   inputs.nix2container.inputs.nixpkgs.follows = "nixpkgs";
 
