@@ -6,7 +6,7 @@
 }:
 {
   imports = [
-    # FIXME(eff): Extract 'determinate' clan service.
+    # TODO(eff): Extract 'determinate' clan service.
     inputs.determinate.nixosModules.default
   ];
 

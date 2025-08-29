@@ -1,4 +1,3 @@
-{ config, ... }:
 {
   disko.devices.disk.tank1-disk1 = {
     type = "disk";
@@ -15,7 +14,7 @@
     content.partitions.zfs = {
       size = "100%";
       content.type = "zfs";
-      content.pool = config.disko.devices.zpool.tank1.name;
+      content.pool = "tank1";
     };
   };
 
@@ -99,7 +98,7 @@
     content.partitions.zfs = {
       size = "100%";
       content.type = "zfs";
-      content.pool = config.disko.devices.zpool.tank2.name;
+      content.pool = "tank2";
     };
   };
 
@@ -110,7 +109,7 @@
     content.partitions.zfs = {
       size = "100%";
       content.type = "zfs";
-      content.pool = config.disko.devices.zpool.tank2.name;
+      content.pool = "tank2";
     };
   };
 
@@ -121,7 +120,7 @@
     content.partitions.zfs = {
       size = "100%";
       content.type = "zfs";
-      content.pool = config.disko.devices.zpool.tank2.name;
+      content.pool = "tank2";
     };
   };
 
@@ -132,7 +131,7 @@
     content.partitions.zfs = {
       size = "100%";
       content.type = "zfs";
-      content.pool = config.disko.devices.zpool.tank2.name;
+      content.pool = "tank2";
     };
   };
 
@@ -192,6 +191,6 @@
   };
 
   boot.zfs.extraPools = [
-    config.disko.devices.zpool.tank2.name
+    "tank2"
   ];
 }
