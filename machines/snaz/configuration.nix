@@ -1,15 +1,10 @@
 {
   config,
-  inputs,
   lib,
+  pkgs,
   ...
 }:
 {
-  imports = [
-    # TODO(eff): Extract 'determinate' clan service.
-    inputs.determinate.nixosModules.default
-  ];
-
   boot.loader.efi.canTouchEfiVariables = true;
   boot.loader.systemd-boot.enable = true;
 
@@ -28,7 +23,7 @@
   time.timeZone = "UTC";
 
   fileSystems."/var/lib/nixos" = {
-    device = "/persist/var/lib/nixos";
+    device = "/safe/var/lib/nixos";
     noCheck = true;
     options = [
       "bind"
@@ -36,7 +31,7 @@
   };
 
   fileSystems."/var/lib/samba" = {
-    device = "/persist/var/lib/samba";
+    device = "/safe/var/lib/samba";
     options = [
       "bind"
       "noauto"
@@ -44,11 +39,11 @@
     ];
   };
 
-  systemd.tmpfiles.settings.nas-media."/nas/media".d.mode = "1777";
-
   services.samba = {
     enable = true;
+    package = pkgs.samba4Full;
     openFirewall = true;
+    usershares.enable = true;
     settings = {
       global = {
         # TODO(eff): Set "ftp" user as guest account instead of "nobody".
@@ -60,15 +55,11 @@
         "server role" = "standalone";
         "server smb encrypt" = "required";
         "use sendfile" = true;
-      };
-      media = {
-        "comment" = "Media library";
-        "create mask" = 0644;
-        "directory mask" = 0755;
-        "guest ok" = true;
-        "path" = "/nas/media";
-        "read only" = true;
-        "write list" = "@wheel";
+        "create mask" = 0664;
+        "directory mask" = 2755;
+        "force create mode" = 0644;
+        "force directory mode" = 2755;
+        "server min protocol" = "SMB3";
       };
     };
   };

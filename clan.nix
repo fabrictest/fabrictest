@@ -7,7 +7,7 @@
     deploy.targetHost = "root@192.168.100.121";
   };
 
-  inventory.instances.me = {
+  inventory.instances.tautologicc = {
     module.name = "users";
     roles.default.tags.all = { };
     roles.default.settings = {
@@ -15,6 +15,7 @@
       groups = [
         "input"
         "networkmanager"
+        "samba"
         "video"
         "wheel"
       ];

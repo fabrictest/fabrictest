@@ -65,6 +65,16 @@
       options.sync = "disabled";
     };
 
+    datasets."ds1/tier1/safe" = {
+      type = "zfs_fs";
+      mountpoint = "/safe";
+      options.mountpoint = "legacy";
+    };
+    datasets."ds1/tier1/home" = {
+      type = "zfs_fs";
+      mountpoint = "/home";
+      options.mountpoint = "legacy";
+    };
     datasets."ds1/tier2/root" = {
       type = "zfs_fs";
       mountpoint = "/";
@@ -73,21 +83,11 @@
       postCreateHook = "zfs snapshot tank1/$name@blank";
       postMountHook = "zfs rollback -r tank1/$name@blank";
     };
-    datasets."ds1/tier1/root" = {
-      type = "zfs_fs";
-      mountpoint = "/persist";
-      options.mountpoint = "legacy";
-    };
     datasets."ds1/tier2/nix" = {
       type = "zfs_fs";
       mountpoint = "/nix";
       options.mountpoint = "legacy";
       options.atime = "off";
-    };
-    datasets."ds1/tier1/home" = {
-      type = "zfs_fs";
-      mountpoint = "/home";
-      options.mountpoint = "legacy";
     };
   };
 
@@ -187,6 +187,10 @@
       type = "zfs_fs";
       mountpoint = "/nas";
       options.mountpoint = "legacy";
+    };
+    datasets."ds2/tier2/nas/media" = {
+      type = "zfs_fs";
+      options.sharesmb = "on";
     };
   };
 
